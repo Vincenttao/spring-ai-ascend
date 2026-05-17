@@ -23,6 +23,16 @@
   <description>Combined HTTP edge + cognitive runtime kernel. Sub-package layering: service.platform owns HTTP/JWT/idempotency/tenant; service.runtime owns orchestration SPI + Run lifecycle + reference executors.</description>
 
   <dependencies>
+    <!-- Sibling module: agent-runtime-core (shared kernel types per ADR-0079). -->
+    <dependency>
+      <groupId>ascend.springai</groupId>
+      <artifactId>agent-runtime-core</artifactId>
+    </dependency>
+    <!-- Sibling module: agent-execution-engine (EngineRegistry + executor SPIs per ADR-0072 + T2.B2). -->
+    <dependency>
+      <groupId>ascend.springai</groupId>
+      <artifactId>agent-execution-engine</artifactId>
+    </dependency>
     <!-- Sibling module: middleware (HookPoint/RuntimeMiddleware/HookDispatcher per ADR-0073). -->
     <dependency>
       <groupId>ascend.springai</groupId>

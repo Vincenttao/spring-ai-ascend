@@ -1312,18 +1312,15 @@ if [[ $_r28d_fail -eq 0 ]]; then pass_rule "out_of_scope_name_guard"; fi
 
 # ---------------------------------------------------------------------------
 # Rule 28e — module_count_invariant (enforcer E27)
-# Root pom.xml MUST declare exactly 8 <module> entries after the 2026-05-18
-# Phase C consolidation (ADR-0078): BoM + 6 substantive modules (agent-client,
-# agent-bus, agent-middleware, agent-execution-engine, agent-evolve,
-# agent-service) + graphmemory starter. Any other count is rejected;
-# L1 plan decision D3 amended per ADR-0078.
-#
-# T2.B2 follow-up will add agent-runtime-core, bumping the count to 9; that
-# wave is responsible for moving this constant to 9 in the same commit.
+# Root pom.xml MUST declare exactly 9 <module> entries after the 2026-05-18
+# T2.B2 wave (ADR-0079): BoM + agent-runtime-core + 6 substantive modules
+# (agent-client, agent-bus, agent-middleware, agent-execution-engine,
+# agent-evolve, agent-service) + graphmemory starter. Any other count is
+# rejected; L1 plan decision D3 amended per ADR-0078 + ADR-0079.
 # ---------------------------------------------------------------------------
 _r28e_fail=0
 _root_pom='pom.xml'
-_r28e_expected=8
+_r28e_expected=9
 if [[ -f "$_root_pom" ]]; then
   _module_count=$(grep -c '<module>' "$_root_pom" 2>/dev/null || echo 0)
   if [[ "$_module_count" -ne "$_r28e_expected" ]]; then

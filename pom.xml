@@ -33,6 +33,7 @@
 
   <modules>
     <module>spring-ai-ascend-dependencies</module>
+    <module>agent-runtime-core</module>
     <module>agent-client</module>
     <module>agent-bus</module>
     <module>agent-middleware</module>
@@ -264,6 +265,11 @@
       <dependency>
         <groupId>ascend.springai</groupId>
         <artifactId>agent-evolve</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ascend.springai</groupId>
+        <artifactId>agent-runtime-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

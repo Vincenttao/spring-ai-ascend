@@ -28,10 +28,20 @@
   <description>Heterogeneous execution engine surface — EngineRegistry / EngineEnvelope / ExecutorAdapter / ExecutorDefinition + Graph/AgentLoop adapters (ADR-0072).</description>
 
   <dependencies>
+    <!-- Engine references Run/RunContext/SuspendSignal from shared core (per ADR-0079). -->
+    <dependency>
+      <groupId>ascend.springai</groupId>
+      <artifactId>agent-runtime-core</artifactId>
+    </dependency>
     <!-- Engine references the HookPoint enum + RuntimeMiddleware listener -->
     <dependency>
       <groupId>ascend.springai</groupId>
       <artifactId>agent-middleware</artifactId>
+    </dependency>
+    <!-- snakeyaml for envelope-schema parsing in EngineRegistry. -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
     </dependency>
 
     <dependency>
