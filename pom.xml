@@ -33,13 +33,13 @@
 
   <modules>
     <module>spring-ai-ascend-dependencies</module>
+    <module>agent-runtime-core</module>
     <module>agent-client</module>
     <module>agent-bus</module>
     <module>agent-middleware</module>
     <module>agent-execution-engine</module>
     <module>agent-evolve</module>
-    <module>agent-platform</module>
-    <module>agent-runtime</module>
+    <module>agent-service</module>
     <module>spring-ai-ascend-graphmemory-starter</module>
   </modules>
 
@@ -269,12 +269,12 @@
       </dependency>
       <dependency>
         <groupId>ascend.springai</groupId>
-        <artifactId>agent-platform</artifactId>
+        <artifactId>agent-runtime-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>ascend.springai</groupId>
-        <artifactId>agent-runtime</artifactId>
+        <artifactId>agent-service</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

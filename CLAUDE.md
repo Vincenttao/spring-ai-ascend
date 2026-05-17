@@ -89,6 +89,13 @@ Enforced by [`rule-10.md`](docs/governance/rules/rule-10.md).
 ---
 
 ### Architectural enforcement
+#### Rule 11 — Contract Spine Completeness
+
+**Every persistent record class committed under `agent-runtime-core/src/main/java/ascend/springai/service/runtime/**/*.java` (or its successor module) MUST declare a `String tenantId` component validated by `Objects.requireNonNull(tenantId, "tenantId is required")` in its compact constructor. Process-internal value objects exempt themselves with a `// scope: process-internal` reason comment. Activated 2026-05-18 (Wave 4 Track B) — trigger met by `Run` and `IdempotencyRecord` carrying tenantId.**
+
+Enforced by [`rule-11.md`](docs/governance/rules/rule-11.md).
+
+---
 #### Rule 20 — Run State Transition Validity
 
 **Every `Run.withStatus(newStatus)` mutation MUST call `RunStateMachine.validate(this.status, newStatus)` before constructing the updated record. Illegal transitions MUST throw `IllegalStateException`.**
@@ -98,9 +105,16 @@ Enforced by [`rule-20.md`](docs/governance/rules/rule-20.md).
 ---
 #### Rule 21 — Tenant Propagation Purity
 
-**No production class under `ascend.springai.runtime..` (main sources) may import any class under `ascend.springai.platform..`. The original narrow case — no import of `TenantContextHolder` — remains the specific instance most likely to be violated and is asserted independently as defence-in-depth.**
+**No production class under `ascend.springai.service.runtime..` (main sources) may import any class under `ascend.springai.service.platform..`. The original narrow case — no import of `TenantContextHolder` — remains the specific instance most likely to be violated and is asserted independently as defence-in-depth.**
 
 Enforced by [`rule-21.md`](docs/governance/rules/rule-21.md).
+
+---
+#### Rule 24 — RunLifecycle Re-Authorization (cancel-only at W1)
+
+**Every `POST /v1/runs/{runId}/cancel` operation MUST re-validate `(request.tenantId == Run.tenantId)`; mismatch returns HTTP 403 `tenant_mismatch`. Idempotent terminal->terminal same-status calls return 200; illegal transitions return 409 `illegal_state_transition`. The cancel surface emits a structured `WARN+` audit log line carrying `(runId, fromStatus, toStatus, actor, occurredAt)` MDC fields. Resume and retry sub-clauses (24.d) remain deferred to the W2 async orchestrator.**
+
+Enforced by [`rule-24.md`](docs/governance/rules/rule-24.md).
 
 ---
 #### Rule 25 — Architecture-Text Truth
@@ -127,7 +141,7 @@ Enforced by [`rule-28.md`](docs/governance/rules/rule-28.md).
 ### Governing principles (Layer-0 enforceable expressions)
 #### Rule 29 — Business/Platform Decoupling Enforcement
 
-**Platform code MUST NOT contain business-specific customizations. Business and example code MUST extend the platform via SPI + `@ConfigurationProperties` only — never by patching `*.impl.*` or `ascend.springai.platform..`. The platform MUST ship a runnable quickstart (`docs/quickstart.md`) referenced from `README.md` so a developer reaches first-agent execution without platform-team intervention.**
+**Platform code MUST NOT contain business-specific customizations. Business and example code MUST extend the platform via SPI + `@ConfigurationProperties` only — never by patching `*.impl.*` or `ascend.springai.service.platform..`. The platform MUST ship a runnable quickstart (`docs/quickstart.md`) referenced from `README.md` so a developer reaches first-agent execution without platform-team intervention.**
 
 Enforced by [`rule-29.md`](docs/governance/rules/rule-29.md).
 
@@ -187,14 +201,14 @@ Enforced by [`rule-36.md`](docs/governance/rules/rule-36.md).
 ---
 #### Rule 37 — Reactive External I/O
 
-**No production class under `agent-runtime/src/main/java/**` may import `org.springframework.web.client.RestTemplate` or `org.springframework.jdbc.core.JdbcTemplate`. External I/O in runtime code MUST go through Reactive (`WebClient` / `R2dbcEntityTemplate`) or Virtual-Thread-backed clients.**
+**No production class under `agent-service/src/main/java/ascend/springai/service/runtime/**` may import `org.springframework.web.client.RestTemplate` or `org.springframework.jdbc.core.JdbcTemplate`. External I/O in runtime code MUST go through Reactive (`WebClient` / `R2dbcEntityTemplate`) or Virtual-Thread-backed clients.**
 
 Enforced by [`rule-37.md`](docs/governance/rules/rule-37.md).
 
 ---
 #### Rule 38 — No Thread.sleep in Business Code
 
-**No production class under `agent-platform/src/main/java/**` or `agent-runtime/src/main/java/**` may invoke `Thread.sleep(...)` or `TimeUnit.<unit>.sleep(...)`. Long-horizon waits MUST be expressed as declarative suspension (`SuspendSignal`) and resumed by the bus-level Tick Engine.**
+**No production class under `agent-service/src/main/java/ascend/springai/service/platform/**` or `agent-service/src/main/java/ascend/springai/service/runtime/**` may invoke `Thread.sleep(...)` or `TimeUnit.<unit>.sleep(...)`. Long-horizon waits MUST be expressed as declarative suspension (`SuspendSignal`) and resumed by the bus-level Tick Engine.**
 
 Enforced by [`rule-38.md`](docs/governance/rules/rule-38.md).
 
@@ -231,7 +245,7 @@ Enforced by [`rule-42.md`](docs/governance/rules/rule-42.md).
 ### W2.x Engine Contract Structural Wave (P-M)
 #### Rule 43 — Engine Envelope Single Authority
 
-**Every Run dispatch MUST go through `EngineRegistry.resolve(envelope)` (or the convenience `resolveByPayload(def)`). Pattern-matching on `ExecutorDefinition` subtypes outside `ascend.springai.runtime.engine.EngineRegistry` is forbidden. The envelope schema `docs/contracts/engine-envelope.v1.yaml` is the single source of truth for engine metadata; the `EngineEnvelope` Java record mirrors the schema and validates required fields (nullability, blanks) on construction. `known_engines` membership is enforced by `EngineRegistry.resolve(...)` and registry boot validation (Phase 5 R2 pilot — enforcer E84); constructor-level membership validation is deferred to Rule 48.c.**
+**Every Run dispatch MUST go through `EngineRegistry.resolve(envelope)` (or the convenience `resolveByPayload(def)`). Pattern-matching on `ExecutorDefinition` subtypes outside `ascend.springai.service.runtime.engine.EngineRegistry` is forbidden. The envelope schema `docs/contracts/engine-envelope.v1.yaml` is the single source of truth for engine metadata; the `EngineEnvelope` Java record mirrors the schema and validates required fields (nullability, blanks) on construction. `known_engines` membership is enforced by `EngineRegistry.resolve(...)` and registry boot validation (Phase 5 R2 pilot — enforcer E84); constructor-level membership validation is deferred to Rule 48.c.**
 
 Enforced by [`rule-43.md`](docs/governance/rules/rule-43.md).
 
@@ -252,7 +266,7 @@ Enforced by [`rule-45.md`](docs/governance/rules/rule-45.md).
 ---
 #### Rule 46 — S2C Callback Envelope + Lifecycle Bound
 
-**Server-to-Client capability invocation MUST go through `S2cCallbackEnvelope` + `S2cCallbackTransport` SPI (both under `ascend.springai.runtime.s2c.spi` after the v2.0.0-rc3 package move per cross-constraint audit α-4 / β-2). The waiting Run MUST suspend via `SuspendSignal.forClientCallback(...)` — a checked-suspension variant introduced in v2.0.0-rc3 per cross-constraint audit α-2 / β-5 to preserve ADR-0019's compile-time-visible-suspension doctrine; the prior parallel unchecked `S2cCallbackSignal` was deleted. The orchestrator MUST mark the parent Run SUSPENDED with `SuspendReason.AwaitClientCallback`. Callbacks consume the `s2c.client.callback` skill capacity declared in `docs/governance/skill-capacity.yaml`. Client responses MUST be validated against `docs/contracts/s2c-callback.v1.yaml` (callback_id match, outcome enum membership) BEFORE resume; invalid response transitions Run to FAILED with reason `s2c_response_invalid`. Non-blocking lifecycle for the W2.x synchronous bridge is deferred to Rule 46.c (W2 async orchestrator).**
+**Server-to-Client capability invocation MUST go through `S2cCallbackEnvelope` + `S2cCallbackTransport` SPI (both under `ascend.springai.service.runtime.s2c.spi` after the v2.0.0-rc3 package move per cross-constraint audit α-4 / β-2). The waiting Run MUST suspend via `SuspendSignal.forClientCallback(...)` — a checked-suspension variant introduced in v2.0.0-rc3 per cross-constraint audit α-2 / β-5 to preserve ADR-0019's compile-time-visible-suspension doctrine; the prior parallel unchecked `S2cCallbackSignal` was deleted. The orchestrator MUST mark the parent Run SUSPENDED with `SuspendReason.AwaitClientCallback`. Callbacks consume the `s2c.client.callback` skill capacity declared in `docs/governance/skill-capacity.yaml`. Client responses MUST be validated against `docs/contracts/s2c-callback.v1.yaml` (callback_id match, outcome enum membership) BEFORE resume; invalid response transitions Run to FAILED with reason `s2c_response_invalid`. Non-blocking lifecycle for the W2.x synchronous bridge is deferred to Rule 46.c (W2 async orchestrator).**
 
 Enforced by [`rule-46.md`](docs/governance/rules/rule-46.md).
 
@@ -310,6 +324,13 @@ Enforced by [`rule-71.md`](docs/governance/rules/rule-71.md).
 ---
 
 ### Gate-script efficiency wave (2026-05-17)
+#### Rule 72 — Rule Duration Regression Check
+
+**Every gate run records per-rule duration in `gate/log/runs/<sha>_<ts>/per-rule.ndjson`. After each successful run, `gate/lib/update_benchmark_baseline.sh` updates a rolling median over the last 5 runs at `gate/log/benchmarks/median.json`. Gate Rule 72 (`rule_duration_regression_check`) fails when any rule's current duration exceeds 2x its baseline median AND exceeds 200ms absolute. Bootstrap waits until 5 successful runs exist; until then Rule 72 vacuously passes.**
+
+Enforced by [`rule-72.md`](docs/governance/rules/rule-72.md).
+
+---
 #### Rule 73 — Gate Config Well-Formed
 
 **`gate/config.yaml` MUST validate against `gate/config.schema.yaml`. The gate fails closed on: missing required keys at any level, type mismatch, value outside declared min/max range, unknown keys (typo detection via `additionalProperties: false`), enum violation. Schema follows the wave's structural invariant: yaml → loader-validated env-vars → runtime-checked.**
@@ -329,4 +350,4 @@ Enforced by [`rule-74.md`](docs/governance/rules/rule-74.md).
 
 ## Deferred Rules
 
-On-demand: [`docs/CLAUDE-deferred.md`](docs/CLAUDE-deferred.md). Currently deferred: Rules 7, 8, 11, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 26, 27 + sub-clauses.
+On-demand: [`docs/CLAUDE-deferred.md`](docs/CLAUDE-deferred.md). Currently deferred: Rules 7, 8, 13, 14, 15, 16, 17, 18, 19, 22, 23, 26, 27 + sub-clauses (Rules 11, 24, 29.c, 72 activated 2026-05-18 per Wave 4).
