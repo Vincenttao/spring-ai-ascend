@@ -96,6 +96,17 @@ Authority documents: `docs/reviews/2026-05-18-l0-rc4-cross-constraint-architectu
 
 ---
 
+## 2026-05-18 — Rules 84-85 added + Rule 82 strengthened + ADR-0080 (rc5 post-response review response prevention wave, v2.0.0-rc6)
+
+- **Rule 82** STRENGTHENED — original kernel (substring-pointer presence) extended with a numeric-agreement check: every active `N <phrase>` count in README.md / gate/README.md (outside fenced code blocks and outside historical-marker lines) MUST equal the parsed baseline_metrics value for the phrase's canonical key (e.g. "N active gate rules" MUST equal `active_gate_checks`). Closes rc5 post-response review P1-1 — the rule no longer passes vacuously when a stale count sits adjacent to a correct pointer. E115 `asserts:` widened. Three new self-tests (numeric_agreement_pos / pointer_present_but_stale_count_neg / historical_marker_exempts_neg).
+- **Rule 84** `active_module_architecture_path_truth` — closes rc5 post-response review P0-1 (`agent-service/ARCHITECTURE.md` still cited engine + S2C SPI paths under `service.runtime.engine/` and `service.runtime.s2c/spi/` after ADR-0079 had moved them to `agent-execution-engine` and `agent-runtime-core`). The rule catches active-module path-claim drift that Rule 81 (skeleton-only) cannot reach. Enforcer E117.
+- **Rule 85** `catalog_spi_row_matches_module_spi_metadata` — closes rc5 post-response review P1-2 (`ResilienceContract` listed as 1 of 11 SPIs in `contract-catalog.md` but its package `ascend.springai.service.runtime.resilience` had no `.spi` token and was not in `module-metadata.yaml#spi_packages` — Rule 77 passed vacuously). Enforcer E118.
+- **ADR-0080** "ResilienceContract `.spi` package alignment" — substantive closure half of rc5 P1-2: moves `ResilienceContract` + value types (`ResiliencePolicy`, `SkillResolution`, `SuspendReason`, `SkillCapacityRegistry`) to `ascend.springai.service.runtime.resilience.spi.*`; implementations stay at the parent package. `agent-service/module-metadata.yaml#spi_packages` and `docs/dfx/agent-service.yaml#spi_packages` both gain the new entry. Extends ADR-0030, ADR-0070; relates to ADR-0072, ADR-0079.
+
+Authority documents: `docs/reviews/2026-05-18-l0-rc5-post-response-architecture-review.en.md` (review) and `docs/reviews/2026-05-18-l0-rc5-post-response-architecture-review-response.en.md` (response).
+
+---
+
 ## Retired-rule notes
 
 ### Rule 12 — Maturity L0–L4

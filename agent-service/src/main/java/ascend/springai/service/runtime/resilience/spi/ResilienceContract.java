@@ -1,4 +1,4 @@
-package ascend.springai.service.runtime.resilience;
+package ascend.springai.service.runtime.resilience.spi;
 
 /**
  * Fin-services routing layer: maps an operation identifier to a named resilience policy triple.

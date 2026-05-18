@@ -4,12 +4,12 @@ title: "Baseline Metrics Single Source"
 level: L1
 view: logical
 principle_ref: P-D
-authority_refs: ["v2.0.0-rc4 cross-constraint review P1-1"]
+authority_refs: ["v2.0.0-rc4 cross-constraint review P1-1", "v2.0.0-rc5 post-response review P1-1"]
 enforcer_refs: [E115]
 status: active
 kernel_cap: 8
 kernel: |
-  **`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` MUST exist with required keys `active_engineering_rules`, `active_gate_checks`, `gate_executable_test_cases`, `enforcer_rows`, `architecture_graph_nodes`, `architecture_graph_edges`. Numeric baseline claims in `README.md` and `gate/README.md` MUST point to this structured block (substring `architecture_sync_gate.baseline_metrics` present). Operationalises the rc4 review P1-1 closure: entrypoint counts have one source.**
+  **`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` MUST exist with required keys `active_engineering_rules`, `active_gate_checks`, `gate_executable_test_cases`, `enforcer_rows`, `architecture_graph_nodes`, `architecture_graph_edges`. Numeric baseline claims in `README.md` and `gate/README.md` MUST point to this structured block (substring `architecture_sync_gate.baseline_metrics` present) AND every active `N <phrase>` count outside fenced code blocks MUST match the parsed baseline value for the phrase's canonical key (`active gate rules` → `active_gate_checks`, `self-tests` → `gate_executable_test_cases`, `enforcer rows` → `enforcer_rows`, `ADRs` → `adr_count`, etc.); lines carrying historical / `rc[N] baseline` / `pre-rc[N]` / `previous` / `deprecated` / `superseded` markers are exempt. Operationalises rc4 review P1-1 closure + rc5 post-response review P1-1 strengthening: entrypoint counts have one source AND drift is detected, not vacuously passed.**
 ---
 
 # Rule 82 — Baseline Metrics Single Source

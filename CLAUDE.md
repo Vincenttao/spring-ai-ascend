@@ -402,7 +402,7 @@ Enforced by [`rule-81.md`](docs/governance/rules/rule-81.md).
 ---
 #### Rule 82 — Baseline Metrics Single Source
 
-**`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` MUST exist with required keys `active_engineering_rules`, `active_gate_checks`, `gate_executable_test_cases`, `enforcer_rows`, `architecture_graph_nodes`, `architecture_graph_edges`. Numeric baseline claims in `README.md` and `gate/README.md` MUST point to this structured block (substring `architecture_sync_gate.baseline_metrics` present). Operationalises the rc4 review P1-1 closure: entrypoint counts have one source.**
+**`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` MUST exist with required keys `active_engineering_rules`, `active_gate_checks`, `gate_executable_test_cases`, `enforcer_rows`, `architecture_graph_nodes`, `architecture_graph_edges`. Numeric baseline claims in `README.md` and `gate/README.md` MUST point to this structured block (substring `architecture_sync_gate.baseline_metrics` present) AND every active `N <phrase>` count outside fenced code blocks MUST match the parsed baseline value for the phrase's canonical key (`active gate rules` → `active_gate_checks`, `self-tests` → `gate_executable_test_cases`, `enforcer rows` → `enforcer_rows`, `ADRs` → `adr_count`, etc.); lines carrying historical / `rc[N] baseline` / `pre-rc[N]` / `previous` / `deprecated` / `superseded` markers are exempt. Operationalises rc4 review P1-1 closure + rc5 post-response review P1-1 strengthening: entrypoint counts have one source AND drift is detected, not vacuously passed.**
 
 Enforced by [`rule-82.md`](docs/governance/rules/rule-82.md).
 
@@ -412,6 +412,22 @@ Enforced by [`rule-82.md`](docs/governance/rules/rule-82.md).
 **Every `docs/contracts/*.v1.yaml` whose `status:` value is `design_only` OR whose `runtime_enforced:` is `false` MUST (a) be listed by file basename in `docs/contracts/contract-catalog.md`, AND (b) cite at least one `ADR-NNNN` whose file exists under `docs/adr/`. Operationalises the rc4 review P1-3 prevention: design-only contracts cannot drift unregistered, and cited ADRs cannot dangle.**
 
 Enforced by [`rule-83.md`](docs/governance/rules/rule-83.md).
+
+---
+
+### rc5 post-response review response prevention wave (2026-05-18)
+#### Rule 84 — Active Module ARCHITECTURE Path Truth
+
+**For every `agent-*/ARCHITECTURE.md` file whose front-matter `status:` token does NOT contain `skeleton` or `deferred`, every inline path claim of the shape `<module>/src/main/java/...` MUST resolve to a real path on disk OR the surrounding paragraph (within ±3 lines) MUST carry one of the markers `historical`, `historical,`, `moved`, `extracted per ADR-NNNN`, `extracted at`, `was rooted`, `formerly`, `deferred`, `superseded`, `pre-ADR-NNNN`. Operationalises the rc5 post-response review P0-1 closure: module-level architecture path claims cannot lag behind real code locations after a refactor (the rc5 wave caught the bidirectional skeleton case via Rule 81; Rule 84 catches the active-module case Rule 81 cannot reach).**
+
+Enforced by [`rule-84.md`](docs/governance/rules/rule-84.md).
+
+---
+#### Rule 85 — Catalog SPI Row Matches Module SPI Metadata
+
+**Every row in `docs/contracts/contract-catalog.md` §2 "Active SPI interfaces" table whose `Status` column does NOT contain the token `(internal)` MUST have its `Module` column value resolve to a module whose `module-metadata.yaml#spi_packages:` list contains the row's `Package` column value (exact entry OR a `.spi.`-prefix entry that contains the row's package as a sub-package), AND the same module's `docs/dfx/<module>.yaml#spi_packages:` list MUST contain the same package. Operationalises rc5 post-response review P1-2 closure: a catalog row that claims SPI status MUST be backed by SPI metadata; the alternative is an explicit `(internal)` mark.**
+
+Enforced by [`rule-85.md`](docs/governance/rules/rule-85.md).
 
 ---
 

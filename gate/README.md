@@ -1,6 +1,6 @@
 # gate/ — Architecture-Sync Gate
 
-> Document-corpus consistency checks for spring-ai-ascend. **64 active gate rules** (canonical bash), backed by **121 self-tests**. The canonical numbers live in [`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`](../docs/governance/architecture-status.yaml). Recent waves: W1 Layered 4+1 + Architecture Graph (ADR-0068) added Rules 37–40; Phase M added Rules 41–44; W1.x L0-ironclad-rule wave Rules 45–52; W1.x Phases 8–9 Rules 53–54; W2.x Engine Contract Structural Wave Rules 55–60; v2.0.0-rc2 second-pass review closure Rules 61–63; 2026-05-17 cross-corpus consistency audit Rules 64–66 (enforcers E94–E96); 2026-05-18 Beyond-SDD review response Rule 79; 2026-05-18 rc4 cross-constraint review response Rules 80–83 (enforcers E113–E116).
+> Document-corpus consistency checks for spring-ai-ascend. **70 active gate rules** (canonical bash), backed by **138 self-tests**. The canonical numbers live in [`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`](../docs/governance/architecture-status.yaml) (single source of truth — Rule 82 numeric-agreement check rejects stale counts here). Recent waves: W1 Layered 4+1 + Architecture Graph (ADR-0068) added Rules 37–40; Phase M added Rules 41–44; W1.x L0-ironclad-rule wave Rules 45–52; W1.x Phases 8–9 Rules 53–54; W2.x Engine Contract Structural Wave Rules 55–60; v2.0.0-rc2 second-pass review closure Rules 61–63; 2026-05-17 cross-corpus consistency audit Rules 64–66 (enforcers E94–E96); 2026-05-18 Beyond-SDD review response Rule 79; 2026-05-18 rc4 cross-constraint review response Rules 80–83 (enforcers E113–E116); 2026-05-18 rc5 post-response review response Rules 84–85 + Rule 82 strengthening (enforcers E117–E118).
 >
 > **Python ≥ 3.10 required** for `gate/build_architecture_graph.py` and `gate/migrate_adrs_to_yaml.py`. Install once: `pip install -r gate/requirements.txt`. Rule 38 (`architecture_graph_well_formed`) fails fast with a clear message if PyYAML is missing.
 >
@@ -15,9 +15,9 @@ It does **not** prove the running system behaves correctly. That is the operator
 ## Canonical entrypoint
 
 ```bash
-bash gate/check_parallel.sh                 # 64 active gate rules, parallel (~7min wall-clock)
-bash gate/check_architecture_sync.sh        # 64 active gate rules, serial   (~24min wall-clock)
-bash gate/test_architecture_sync_gate.sh    # 121 self-tests (~20s)
+bash gate/check_parallel.sh                 # 70 active gate rules, parallel (~7min wall-clock)
+bash gate/check_architecture_sync.sh        # 70 active gate rules, serial   (~24min wall-clock)
+bash gate/test_architecture_sync_gate.sh    # 138 self-tests (~20s)
 python gate/build_architecture_graph.py     # regenerate the architecture-graph
 ```
 
@@ -48,9 +48,9 @@ Run the bash entrypoint from Git Bash / WSL / any POSIX shell on Windows.
 
 | File | Role |
 |------|------|
-| `check_architecture_sync.sh` | **Canonical L0 release gate (64 active rules).** |
+| `check_architecture_sync.sh` | **Canonical L0 release gate (70 active rules).** |
 | `check_architecture_sync.ps1` | DEPRECATED (v2.0.0-rc2). Fail-closed stub; see deprecation banner. |
-| `test_architecture_sync_gate.sh` | Self-test harness — 121 cases covering Rules 1–6, 16, 19, 22, 24, 25, 26, 27, 28, 28j, 28k, 29, 60 (sunset), 61, 62, 63, 64, 65, 66, 79, 80, 81, 82, 83. |
+| `test_architecture_sync_gate.sh` | Self-test harness — 138 self-test cases covering Rules 1–6, 16, 19, 22, 24, 25, 26, 27, 28, 28j, 28k, 29, 60 (sunset), 61, 62, 63, 64, 65, 66, 79, 80, 81, 82 (incl. rc6 numeric-agreement strengthening), 83, 84, 85. |
 | `build_architecture_graph.py` | Regenerates `docs/governance/architecture-graph.yaml` from the authoritative inputs (Rule 34). |
 | `doctor.sh` / `doctor.ps1` | Dev-only env probe (not a gate). |
 | `run_operator_shape_smoke.sh` / `.ps1` | Dev-only fail-closed smoke shells (not a gate). |
@@ -61,11 +61,11 @@ Run the bash entrypoint from Git Bash / WSL / any POSIX shell on Windows.
 
 ## Rule catalog (current — see `check_architecture_sync.sh` header for the canonical comment block)
 
-The bash script's header comment is the single source of truth for the rule list. The previous markdown table in this README was retired in v2.0.0-rc2 to eliminate dual-truth drift (the rules-table-as-prose became another F-α "parity-claim without enforcer" instance per the second-pass review). To browse the rule list, open `gate/check_architecture_sync.sh` and read the comment block lines 1–91.
+The bash script's header comment is the single source of truth for the rule list. The previous markdown table in this README was retired in v2.0.0-rc2 to eliminate dual-truth drift (the rules-table-as-prose became another F-α "parity-claim without enforcer" instance per the second-pass review). To browse the rule list, open `gate/check_architecture_sync.sh` and read the comment block lines 1–119.
 
 ## Self-test coverage
 
-`gate/test_architecture_sync_gate.sh` runs 121 self-tests — positive + negative fixtures per the rules most prone to regression. The script prints `Tests passed: 121/121` on success. The header at the top of the file lists which rule IDs have self-test coverage; the `TOTAL=` line at the bottom is the authoritative count (the early `TOTAL=` near the top of the file is stale and overridden).
+`gate/test_architecture_sync_gate.sh` runs 138 self-tests — positive + negative fixtures per the rules most prone to regression. The script prints `Tests passed: 138/138` on success. The header at the top of the file lists which rule IDs have self-test coverage; the `TOTAL=` line at the bottom is the authoritative count (the early `TOTAL=` near the top of the file is stale and overridden).
 
 ## See also
 

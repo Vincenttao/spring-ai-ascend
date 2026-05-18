@@ -1,5 +1,6 @@
 package ascend.springai.service.runtime.resilience;
 
+import ascend.springai.service.runtime.resilience.spi.ResiliencePolicy;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.junit.jupiter.api.Test;
 

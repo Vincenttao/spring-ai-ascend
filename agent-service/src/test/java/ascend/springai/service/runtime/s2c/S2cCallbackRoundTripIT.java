@@ -8,7 +8,7 @@ import ascend.springai.service.runtime.orchestration.inmemory.SequentialGraphExe
 import ascend.springai.service.runtime.orchestration.inmemory.SyncOrchestrator;
 import ascend.springai.service.runtime.orchestration.spi.ExecutorDefinition;
 import ascend.springai.service.runtime.orchestration.spi.SuspendSignal;
-import ascend.springai.service.runtime.resilience.SuspendReason;
+import ascend.springai.service.runtime.resilience.spi.SuspendReason;
 import ascend.springai.service.runtime.runs.RunStatus;
 import ascend.springai.service.runtime.s2c.spi.S2cCallbackEnvelope;
 import ascend.springai.service.runtime.s2c.spi.S2cCallbackResponse;

@@ -1051,3 +1051,19 @@
   view: logical
   artifact: gate/check_architecture_sync.sh#design_only_contract_registered_in_catalog
   asserts: "For every docs/contracts/*.v1.yaml with 'status: design_only' OR 'runtime_enforced: false', (a) the file basename appears as a literal substring in docs/contracts/contract-catalog.md, AND (b) at least one ADR-NNNN reference cited in the yaml resolves to a real file under docs/adr/<NNNN>-*.yaml or docs/adr/<NNNN>-*.md. Every cited ADR must exist (dangling references fail). Closes rc4 P1-3 prevention: plan-projection.v1.yaml unregistered + W2/W4 staging ambiguity defect class."
+
+- id: E117
+  constraint_ref: "CLAUDE.md Rule 84 (active_module_architecture_path_truth); rc5 post-response review P0-1; ADR-0078; ADR-0079"
+  kind: gate-script
+  level: L1
+  view: development
+  artifact: gate/check_architecture_sync.sh#active_module_architecture_path_truth
+  asserts: "For every agent-*/ARCHITECTURE.md file whose YAML front-matter status: token does NOT contain 'skeleton' or 'deferred', every inline path claim matching the regex 'agent-[a-z-]+/src/main/java/[a-zA-Z0-9_/.-]+' MUST resolve to a real file on disk OR the surrounding +/-3 lines MUST carry one of the historical markers: historical, moved, extracted per ADR-NNNN, extracted at, was rooted, formerly, deferred, superseded, pre-ADR-NNNN, relocated, migrated, post-ADR-NNNN. Closes rc5 post-response P0-1: active module ARCHITECTURE.md path claims cannot lag behind real code locations after a refactor (Rule 81 covers the symmetric skeleton case; Rule 84 covers the active case Rule 81 does not reach)."
+
+- id: E118
+  constraint_ref: "CLAUDE.md Rule 85 (catalog_spi_row_matches_module_spi_metadata); rc5 post-response review P1-2; ADR-0030; ADR-0070; ADR-0080"
+  kind: gate-script
+  level: L1
+  view: development
+  artifact: gate/check_architecture_sync.sh#catalog_spi_row_matches_module_spi_metadata
+  asserts: "Every row in the docs/contracts/contract-catalog.md '**Active SPI interfaces (N total):**' table whose 'Status' column does NOT contain the literal substring '(internal)' MUST: (a) point at a module whose <module>/module-metadata.yaml contains a spi_packages: entry that exactly matches the row's Package column OR contains the package as a .spi-prefixed sub-package, AND (b) the same module's docs/dfx/<module>.yaml#spi_packages list MUST contain the same package. The header count (N total) MUST equal the number of non-(internal) rows. Closes rc5 post-response P1-2: catalog SPI commitments must be backed by SPI metadata declarations on both sides of the Rule 78 set."

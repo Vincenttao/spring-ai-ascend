@@ -1,5 +1,11 @@
 package ascend.springai.service.runtime.resilience;
 
+import ascend.springai.service.runtime.resilience.spi.ResilienceContract;
+import ascend.springai.service.runtime.resilience.spi.ResiliencePolicy;
+import ascend.springai.service.runtime.resilience.spi.SkillCapacityRegistry;
+import ascend.springai.service.runtime.resilience.spi.SkillResolution;
+import ascend.springai.service.runtime.resilience.spi.SuspendReason;
+
 /**
  * Production {@link ResilienceContract} that implements the W1.x Phase 9 two-arg
  * surface (Rule 41.b / ADR-0070). The single-arg {@link #resolve(String)} delegates

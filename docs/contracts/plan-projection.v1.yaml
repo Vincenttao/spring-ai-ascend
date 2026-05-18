@@ -1,20 +1,29 @@
 # Plan Projection schema, version 1.
 #
-# Status (plan G / §4 + §5 overdesign labels): DESIGN ONLY at v2.0.0-rc1.
-# No Java type, no runtime self-validation, no enforcer ships in this hotfix.
-# This contract closes the named bridge gap between ADR-0032 (PlanState,
-# RunPlanRef) and ADR-0052 (SkillResourceMatrix / bidding) flagged by the
-# post-release review §4 "Dynamic planning is still under-connected".
+# Status (plan G / §4 + §5 overdesign labels): DESIGN ONLY since v2.0.0-rc1.
+# No Java type, no runtime self-validation ships at W1; the orchestrator
+# does NOT consume the projection yet. This contract closes the named
+# bridge gap between ADR-0032 (PlanState, RunPlanRef) and ADR-0052
+# (SkillResourceMatrix / bidding) flagged by the post-release review §4
+# "Dynamic planning is still under-connected".
+#
+# Architecture-corpus enforcement (active since v2.0.0-rc5):
+#   - Rule 83 (design_only_contract_registered_in_catalog, enforcer E116)
+#     asserts this contract appears in docs/contracts/contract-catalog.md §3
+#     and cites at least one existing ADR. This is corpus-registration
+#     enforcement, NOT runtime self-validation.
 #
 # Wave trajectory:
-#   - v2.0.0-rc1 (now)  : design_only — schema declared, no runtime.
-#   - W2 scheduler wave : promote to schema_shipped — Java record +
+#   - v2.0.0-rc1                : design_only — schema declared, no runtime.
+#   - v2.0.0-rc5 (active now)   : Rule 83 catalog-registration enforced.
+#   - W2 scheduler wave         : promote to schema_shipped — Java record +
 #     PlanProjector SPI lands alongside the first non-in-memory scheduler.
-#   - W2.x.1            : runtime_enforced — orchestrator consults the
+#   - W2.x.1                    : runtime_enforced — orchestrator consults the
 #     projection before submitting steps to the SkillResourceMatrix.
 #
-# Authority: post-release architecture review §4 + ADR-0032 (PlanState) +
-# ADR-0052 (SkillResourceMatrix). No new ADR is cut for v2.0.0-rc1; W2
+# Authority: post-release architecture review §4 + ADR-0032 (PlanState,
+# 2026-05-18 amendment "PlanProjection staging note") + ADR-0052
+# (SkillResourceMatrix). No new runtime ADR is cut for v2.0.0-rc1; W2
 # scheduler wave will write the promotion ADR.
 #
 # Bridge intent: a planned step projects its required + optional skills,

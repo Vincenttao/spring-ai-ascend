@@ -1,5 +1,9 @@
 package ascend.springai.service.runtime.resilience;
 
+import ascend.springai.service.runtime.resilience.spi.ResilienceContract;
+import ascend.springai.service.runtime.resilience.spi.SkillCapacityRegistry;
+import ascend.springai.service.runtime.resilience.spi.SkillResolution;
+import ascend.springai.service.runtime.resilience.spi.SuspendReason;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

@@ -10,6 +10,8 @@ response_doc: docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-revie
 
 # v2.0.0-rc5 — rc4 cross-constraint review response (2026-05-18)
 
+> **Historical artifact frozen at SHA 604ec3a** — this release note documents the state at v2.0.0-rc5 (2026-05-18). Subsequent state lives in `docs/releases/2026-05-18-l0-rc6-post-response.en.md` (v2.0.0-rc6) which supersedes this note for current-baseline claims. rc5 is NOT retracted; this note is preserved as the canonical rc5 snapshot.
+
 ## Baseline counts (post-rc5)
 
 | metric | count |

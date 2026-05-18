@@ -43,21 +43,24 @@ class PlatformImportsOnlyRuntimePublicApiTest {
 
     @Test
     void platform_does_not_depend_on_internal_runtime_packages() {
-        // W1.x Phase 9 / ADR-0070 promoted ascend.springai.service.runtime.resilience..
-        // to a PUBLIC SPI surface (ResilienceContract two-arg resolve consumed by
-        // agent-platform.resilience.ResilienceAutoConfiguration). Internal-only
-        // packages stay: idempotency.. and probe..
+        // W1.x Phase 9 / ADR-0070 promoted ascend.springai.service.runtime.resilience.spi..
+        // to a PUBLIC SPI surface — ADR-0080 (v2.0.0-rc6, 2026-05-18) moved the surface
+        // types (ResilienceContract, ResiliencePolicy, SkillResolution, SuspendReason,
+        // SkillCapacityRegistry) under the .spi sub-package; implementations stay in
+        // runtime.resilience.* (Default*, Yaml*). The two-arg resolve is consumed by
+        // agent-platform.resilience.ResilienceAutoConfiguration. Internal-only packages
+        // stay: idempotency.. and probe..
         ArchRule rule = noClasses()
                 .that().resideInAPackage("ascend.springai.service.platform..")
                 .should().dependOnClassesThat()
                 .resideInAnyPackage(
                         "ascend.springai.service.runtime.idempotency..",
                         "ascend.springai.service.runtime.probe..")
-                .because("ADR-0055 / plan §18 F9 (extended by ADR-0070): platform may "
-                        + "import runtime's PUBLIC api (runs.*, orchestration.spi.*, "
-                        + "posture.*, resilience.*, and the InMemoryRunRegistry adapter). "
-                        + "Internal packages (idempotency.., probe..) remain hidden from "
-                        + "the HTTP edge. Enforcer row E34.");
+                .because("ADR-0055 / plan §18 F9 (extended by ADR-0070; refined by ADR-0080): "
+                        + "platform may import runtime's PUBLIC api (runs.*, orchestration.spi.*, "
+                        + "posture.*, resilience.spi.* + resilience.{Default,Yaml}* impls, and the "
+                        + "InMemoryRunRegistry adapter). Internal packages (idempotency.., probe..) "
+                        + "remain hidden from the HTTP edge. Enforcer row E34.");
         rule.check(PLATFORM_MAIN_CLASSES);
     }
 

@@ -1,9 +1,9 @@
 package ascend.springai.service.platform.resilience;
 
 import ascend.springai.service.runtime.resilience.DefaultSkillResilienceContract;
-import ascend.springai.service.runtime.resilience.ResilienceContract;
-import ascend.springai.service.runtime.resilience.SkillCapacityRegistry;
 import ascend.springai.service.runtime.resilience.YamlSkillCapacityRegistry;
+import ascend.springai.service.runtime.resilience.spi.ResilienceContract;
+import ascend.springai.service.runtime.resilience.spi.SkillCapacityRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

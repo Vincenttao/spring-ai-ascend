@@ -41,7 +41,7 @@ P1-4 follow-up (L1-expert-review 2026-05-14, carried through Phase C): legacy §
 
 ## 2. Shipped components
 
-> Path convention: every Java path below is rooted at `agent-service/src/main/java/ascend/springai/service/{platform,runtime}/...`. Test paths mirror the layout under `src/test/java/`.
+> Path convention: every Java path below is rooted at `agent-service/src/main/java/ascend/springai/service/{platform,runtime}/...` **except where explicitly noted as living in `agent-runtime-core` or `agent-execution-engine` post-ADR-0078 / ADR-0079**. The engine SPI surface and the S2C SPI types were extracted to their own modules at the rc5 wave (2026-05-18) — see §2.B `runtime / engine` and `runtime / s2c` below. Test paths mirror the layout under `src/test/java/`.
 
 ### 2.A Platform-side concerns (subpackage `service.platform.*`)
 
@@ -285,13 +285,23 @@ RUNNING, SUSPENDED, CANCELLED, SUCCEEDED, FAILED, EXPIRED), `RunMode`,
 illegal transitions throw `IllegalStateException` per Rule 20),
 `RunRepository` SPI.
 
-#### runtime / resilience -- Operation-routing SPI (W0)
+#### runtime / resilience -- Operation-routing SPI (W0, **`.spi` package home per ADR-0080**)
 
+The `ResilienceContract` published SPI surface lives at
+`agent-service/src/main/java/ascend/springai/service/runtime/resilience/spi/`
+(package `ascend.springai.service.runtime.resilience.spi`): `ResilienceContract`,
+`ResiliencePolicy`, `SkillResolution`, `SuspendReason`, `SkillCapacityRegistry`.
+Implementations stay in the parent package
 `agent-service/src/main/java/ascend/springai/service/runtime/resilience/`:
-`ResilienceContract` SPI, `ResiliencePolicy`, `YamlResilienceContract`.
+`DefaultSkillResilienceContract`, `YamlResilienceContract`,
+`YamlSkillCapacityRegistry`.
+
 The runtime `ResilienceContract.resolve(tenant, skill)` consults
 `docs/governance/skill-capacity.yaml` (Rule 41); over-cap callers are
-SUSPENDED, not rejected (Chronos Hydration interlock with Rule 38).
+SUSPENDED, not rejected (Chronos Hydration interlock with Rule 38). The
+`.spi` package home was added at the rc6 wave (ADR-0080, 2026-05-18) to align
+the published-SPI surface with Rules 32 / 77 / 78 — the same split pattern
+used by `agent-execution-engine` (`engine.spi.*` vs `service.runtime.engine.*`).
 
 #### runtime / memory -- Memory SPI shell (W0 shell)
 
@@ -301,29 +311,63 @@ the `spring-ai-ascend-graphmemory-starter` autoconfiguration, which
 points at `ascend.springai.service.runtime.graphmemory.GraphMemoryAutoConfiguration`
 post-Phase-C.
 
-#### runtime / engine -- Engine envelope + registry (W2.x)
+#### runtime / engine -- Engine envelope + registry (W2.x, **consumed from `agent-execution-engine` post-ADR-0079**)
 
-`agent-service/src/main/java/ascend/springai/service/runtime/engine/`:
-`EngineRegistry`, `EngineEnvelope` record (mirrors
-`docs/contracts/engine-envelope.v1.yaml`), `ExecutorAdapter` SPI.
+`agent-service` **consumes** the `agent-execution-engine` module — the
+engine SPI surface and the registry/envelope no longer live here. After
+the rc5 wave (2026-05-18) ADR-0079 extraction:
+
+- **Engine SPI surface** (package `ascend.springai.engine.spi.*`,
+  module `agent-execution-engine`): `ExecutorAdapter`, `GraphExecutor`,
+  `AgentLoopExecutor`, `EngineHookSurface`, `EngineMatchingException`
+  — sources live at
+  `agent-execution-engine/src/main/java/ascend/springai/engine/spi/`.
+- **Engine registry + envelope home** (package
+  `ascend.springai.service.runtime.engine.*`, module
+  `agent-execution-engine` — the package root is preserved across the
+  module move so that `agent-service` callers do not see an import
+  rename): `EngineRegistry`, `EngineEnvelope` record (mirrors
+  `docs/contracts/engine-envelope.v1.yaml`) — sources at
+  `agent-execution-engine/src/main/java/ascend/springai/service/runtime/engine/`.
+- **Reference engine adapters** stay in `agent-service` at
+  `agent-service/src/main/java/ascend/springai/service/runtime/orchestration/inmemory/`:
+  `SequentialGraphExecutor` (`extends GraphExecutor`),
+  `IterativeAgentLoopExecutor` (`extends AgentLoopExecutor`),
+  `SyncOrchestrator`, `InMemoryCheckpointer`, `InMemoryRunRegistry`.
+
 Every Run dispatch goes through `EngineRegistry.resolve(envelope)`
 (Rule 43); pattern-matching on `ExecutorDefinition` subtypes outside
 the registry is forbidden. Mismatch raises `EngineMatchingException`
-and transitions the Run to FAILED with reason `engine_mismatch` (Rule
-44, no fallback policy).
+and transitions the Run to FAILED with reason `engine_mismatch`
+(Rule 44, no fallback policy). The intentional split-package
+arrangement (SPI under `engine.spi.*`, registry/envelope under
+`service.runtime.engine.*` — both inside `agent-execution-engine`) is
+documented in `agent-execution-engine/ARCHITECTURE.md` Status section
+and protected by Rule 76 (no split SPI packages — `engine.spi.*` is
+owned by exactly one module).
 
-Note (T2.B2, Wave 2 of the re-plan): engine code is scheduled to move
-out of `agent-service` into the standalone `agent-execution-engine`
-module; reference adapters remain in `service.runtime.orchestration.inmemory`.
+#### runtime / s2c -- Server-to-Client callback envelope (W2.x, ADR-0040 rc3, **SPI in `agent-runtime-core` post-ADR-0079**)
 
-#### runtime / s2c -- Server-to-Client callback envelope (W2.x, ADR-0040 rc3)
+`agent-service` **consumes** the S2C SPI surface from `agent-runtime-core` —
+the SPI records and transport interface no longer live here. After the
+rc5 wave (2026-05-18) ADR-0079 extraction:
 
-`agent-service/src/main/java/ascend/springai/service/runtime/s2c/spi/`:
-`S2cCallbackEnvelope`, `S2cCallbackTransport` SPI. The waiting Run
-suspends via `SuspendSignal.forClientCallback(...)` (a checked-suspension
-variant unifying the prior `S2cCallbackSignal`). The orchestrator marks
-the parent Run SUSPENDED with `SuspendReason.AwaitClientCallback`.
-Callbacks consume the `s2c.client.callback` skill capacity declared in
+- **S2C SPI surface** (package
+  `ascend.springai.service.runtime.s2c.spi.*`, module
+  `agent-runtime-core`): `S2cCallbackEnvelope`, `S2cCallbackResponse`,
+  `S2cCallbackTransport` — sources at
+  `agent-runtime-core/src/main/java/ascend/springai/service/runtime/s2c/spi/`.
+- **Reference transport impl** stays in `agent-service` at
+  `agent-service/src/main/java/ascend/springai/service/runtime/s2c/InMemoryS2cCallbackTransport.java`
+  (package `ascend.springai.service.runtime.s2c`, non-`.spi` —
+  implementation home).
+
+The waiting Run suspends via `SuspendSignal.forClientCallback(...)` —
+the checked-suspension variant introduced in the rc3 wave per ADR-0074
+(unifies the prior unchecked `S2cCallbackSignal`, which was deleted).
+The orchestrator marks the parent Run SUSPENDED with
+`SuspendReason.AwaitClientCallback`. Callbacks consume the
+`s2c.client.callback` skill capacity declared in
 `docs/governance/skill-capacity.yaml` (Rule 46).
 
 #### runtime / probe -- OSS classpath shape probe (W0)
@@ -493,9 +537,6 @@ values (keys: `spring-ai.version`, `temporal.version`, `mcp.version`,
 - `SET LOCAL` GUC, Postgres RLS policies: W2.
 - Spring Cloud Gateway, per-tenant config overrides: W2–W3.
 - Three-track `RunDispatcher`, streaming `Flux<RunEvent>` handoff: W2.
-- Engine code extraction to `agent-execution-engine` (T2.B2 wave 2):
-  scheduled post-Phase-C; reference adapters remain in
-  `service.runtime.orchestration.inmemory`.
 - LLM provider integrations beyond mocks (`service.runtime.llm/`): W2.
 - Per-tenant MCP tool registry (`service.runtime.tool/`): W3.
 - ActionGuard 5-stage filter chain (`service.runtime.action/`): W3.
@@ -582,13 +623,19 @@ values (keys: `spring-ai.version`, `temporal.version`, `mcp.version`,
   `gate/test_architecture_sync_gate.sh` injects a synthetic
   `service.runtime → service.platform` import to assert the gate
   catches it.
-- **Engine code in transit** (T2.B2): `service.runtime.engine.*` is
-  scheduled to migrate to `agent-execution-engine` in the next wave.
-  Until then, the engine code's `EngineRegistry.resolve` boundary is
-  asserted by Rule 43 enforcer E84.
+- **Engine extraction landed** (T2.B2, ADR-0079, 2026-05-18): the engine
+  SPI surface moved to `agent-execution-engine` at
+  `ascend.springai.engine.spi.*` (`ExecutorAdapter` and friends), and
+  `EngineRegistry` + `EngineEnvelope` moved to the same module under
+  `ascend.springai.service.runtime.engine.*` (package preserved to keep
+  callers unchanged). The intentional split-package arrangement is
+  documented in `agent-execution-engine/ARCHITECTURE.md` Status section.
+  `EngineRegistry.resolve` boundary remains asserted by Rule 43
+  enforcer E84; consumed cross-module via the `agent-runtime-core` →
+  `agent-execution-engine` → `agent-service` dependency chain.
 
 ## 10. Roadmap
 
-- Deferred capabilities and design decisions: `docs/CLAUDE-deferred.md`; current delivery state per wave (W0..W4): `docs/STATE.md`.
+- Deferred capabilities and design decisions: `docs/CLAUDE-deferred.md`; current delivery state per wave (W0..W4): `docs/governance/architecture-status.yaml` (structured capability ledger; the prior `docs/STATE.md` pointer was removed at the rc6 wave — never landed on disk).
 - Wave engineering plan: `ARCHITECTURE.md §1 + docs/governance/architecture-status.yaml + docs/CLAUDE-deferred.md` (per ADR-0037; engineering-plan-W0-W4.md archived).
 - Phase C consolidation specification: `docs/adr/0078-agent-service-consolidation.yaml`; execution plan: `docs/plans/phase-c-merge.md`.

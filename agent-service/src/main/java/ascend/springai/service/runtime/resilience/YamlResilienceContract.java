@@ -1,5 +1,8 @@
 package ascend.springai.service.runtime.resilience;
 
+import ascend.springai.service.runtime.resilience.spi.ResilienceContract;
+import ascend.springai.service.runtime.resilience.spi.ResiliencePolicy;
+
 import java.util.Map;
 
 /**

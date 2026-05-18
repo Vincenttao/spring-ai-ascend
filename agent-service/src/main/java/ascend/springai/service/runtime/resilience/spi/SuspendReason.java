@@ -1,4 +1,4 @@
-package ascend.springai.service.runtime.resilience;
+package ascend.springai.service.runtime.resilience.spi;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -13,6 +13,7 @@ generated_at: 2026-05-18
 
 spi_packages:
   - ascend.springai.service.runtime.memory.spi
+  - ascend.springai.service.runtime.resilience.spi   # promoted per ADR-0080 (rc5 review P1-2 closure, 2026-05-18)
 
 releasability:
   artifact_coords: "io.github.springai-ascend:agent-service"

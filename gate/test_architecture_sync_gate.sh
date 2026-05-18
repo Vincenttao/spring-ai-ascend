@@ -40,7 +40,7 @@ fi
 
 passed=0
 failed=0
-TOTAL=129
+TOTAL=138
 
 # PR-E4: parallel-aware ok()/fail().
 # Serial mode (TEST_RESULT_FILE unset): increment globals + print directly.
@@ -3414,6 +3414,276 @@ else
   fail "rule82_baseline_metrics_single_source_neg" "expected FAIL but all keys present"
 fi
 
+## rc6 strengthening (Track B) — numeric-agreement check for entrypoint count phrases.
+## Three additional tests: numeric pos / pointer-with-stale-count neg / historical-marker exemption pos.
+
+# Helper: parse a count phrase + baseline yaml using the same awk logic the production gate uses.
+_r82_extract_expected() {
+  local yaml="$1" key="$2"
+  awk -v key="$key" '
+    /^architecture_sync_gate:/{f=1; next}
+    f && /^[^[:space:]]/{exit}
+    f && $0 ~ "^[[:space:]]+"key":"{
+      sub(/^[[:space:]]+[a-zA-Z_]+:[[:space:]]*/, ""); sub(/[^0-9].*$/, ""); print; exit
+    }
+  ' "$yaml" 2>/dev/null
+}
+
+## Positive: pointer present AND number matches baseline -> Rule 82 PASS
+_r82_num_pos_yaml="$scratch/r82_num_pos_status.yaml"
+_r82_num_pos_readme="$scratch/r82_num_pos_README.md"
+cat > "$_r82_num_pos_yaml" <<'DOCEOF'
+architecture_sync_gate:
+  baseline_metrics:
+    active_engineering_rules: 41
+    active_gate_checks: 70
+    gate_executable_test_cases: 138
+    enforcer_rows: 100
+    architecture_graph_nodes: 329
+    architecture_graph_edges: 459
+DOCEOF
+cat > "$_r82_num_pos_readme" <<'DOCEOF'
+70 active gate rules backed by 138 self-tests.
+See architecture_sync_gate.baseline_metrics for the canonical source.
+DOCEOF
+_r82_num_pos_expected=$(_r82_extract_expected "$_r82_num_pos_yaml" "active_gate_checks")
+_r82_num_pos_actual=$(grep -oE '[0-9]+[[:space:]]+active gate rules' "$_r82_num_pos_readme" | head -1 | grep -oE '^[0-9]+')
+if [[ "$_r82_num_pos_actual" == "$_r82_num_pos_expected" ]]; then
+  ok "rule82_numeric_agreement_pos" "entrypoint count phrase matching baseline_metrics correctly accepted"
+else
+  fail "rule82_numeric_agreement_pos" "expected actual=$_r82_num_pos_actual to equal expected=$_r82_num_pos_expected"
+fi
+
+## Negative: pointer present BUT adjacent count stale (reviewer's exact rc5 evidence) -> Rule 82 FAIL
+_r82_num_neg_readme="$scratch/r82_num_neg_README.md"
+cat > "$_r82_num_neg_readme" <<'DOCEOF'
+**64 active gate rules** backed by **121 self-tests**.
+The canonical numbers live in architecture_sync_gate.baseline_metrics.
+DOCEOF
+_r82_num_neg_expected=$(_r82_extract_expected "$_r82_num_pos_yaml" "active_gate_checks")
+_r82_num_neg_actual=$(grep -oE '[0-9]+[[:space:]]+active gate rules' "$_r82_num_neg_readme" | head -1 | grep -oE '^[0-9]+')
+if [[ "$_r82_num_neg_actual" != "$_r82_num_neg_expected" ]]; then
+  ok "rule82_pointer_present_but_stale_count_neg" "pointer present + stale '64 active gate rules' correctly flagged as numeric drift"
+else
+  fail "rule82_pointer_present_but_stale_count_neg" "expected drift but actual=$_r82_num_neg_actual matched expected=$_r82_num_neg_expected"
+fi
+
+## Negative-but-exempt: historical marker exempts a stale count -> Rule 82 PASS
+_r82_num_hist_readme="$scratch/r82_num_hist_README.md"
+cat > "$_r82_num_hist_readme" <<'DOCEOF'
+The rc4 baseline 64 active gate rules grew to the rc6 canonical value.
+See architecture_sync_gate.baseline_metrics for the current count.
+DOCEOF
+_r82_marker_re='historical|rc[0-9]+ baseline|pre-rc[0-9]+|previous|prior|deprecated|superseded|formerly|was [0-9]'
+_r82_num_hist_line_has_marker=0
+if grep -qiE "$_r82_marker_re" "$_r82_num_hist_readme"; then
+  _r82_num_hist_line_has_marker=1
+fi
+if [[ $_r82_num_hist_line_has_marker -eq 1 ]]; then
+  ok "rule82_historical_marker_exempts_neg" "historical-marker exemption correctly suppresses Rule 82 numeric-drift false positive"
+else
+  fail "rule82_historical_marker_exempts_neg" "expected historical marker to be detected"
+fi
+
+}
+
+test_rule84_active_module_architecture_path_truth() {
+
+## Positive: agent-service/ARCHITECTURE.md cites a real path -> Rule 84 PASS
+_r84_pos_root="$scratch/r84_pos"
+mkdir -p "$_r84_pos_root/agent-service/src/main/java/ascend/springai/service/runtime/runs"
+cat > "$_r84_pos_root/agent-service/src/main/java/ascend/springai/service/runtime/runs/Run.java" <<'JAVA'
+package ascend.springai.service.runtime.runs;
+public record Run(String runId) {}
+JAVA
+cat > "$_r84_pos_root/agent-service/ARCHITECTURE.md" <<'DOCEOF'
+---
+status: active
+---
+The Run aggregate lives at agent-service/src/main/java/ascend/springai/service/runtime/runs/Run.java.
+DOCEOF
+_r84_pos_violation=0
+while IFS= read -r _r84_p_path; do
+  [[ -z "$_r84_p_path" ]] && continue
+  [[ ! -e "$_r84_pos_root/${_r84_p_path%.}" ]] && _r84_pos_violation=1
+done < <(grep -oE 'agent-[a-z-]+/src/main/java/[a-zA-Z0-9_/.-]+' "$_r84_pos_root/agent-service/ARCHITECTURE.md")
+if [[ $_r84_pos_violation -eq 0 ]]; then
+  ok "rule84_path_claim_resolves_pos" "active module ARCHITECTURE.md with resolving path correctly accepted"
+else
+  fail "rule84_path_claim_resolves_pos" "expected PASS but path-resolution check flagged"
+fi
+
+## Negative: agent-service/ARCHITECTURE.md cites stale post-ADR-0079 engine path (reviewer's rc5 evidence) -> Rule 84 FAIL
+_r84_neg_root="$scratch/r84_neg"
+mkdir -p "$_r84_neg_root/agent-service"
+cat > "$_r84_neg_root/agent-service/ARCHITECTURE.md" <<'DOCEOF'
+---
+status: active
+---
+The engine SPI lives at agent-service/src/main/java/ascend/springai/service/runtime/engine/ExecutorAdapter.java.
+DOCEOF
+_r84_neg_violation=0
+_r84_neg_marker_re='historical|moved|extracted per ADR-[0-9]{4}|superseded|formerly|deferred|pre-ADR-[0-9]{4}'
+_r84_neg_lineno=0
+while IFS= read -r _r84_neg_line || [[ -n "$_r84_neg_line" ]]; do
+  _r84_neg_lineno=$((_r84_neg_lineno + 1))
+  _r84_neg_paths=$(echo "$_r84_neg_line" | grep -oE 'agent-[a-z-]+/src/main/java/[a-zA-Z0-9_/.-]+' | sort -u)
+  [[ -z "$_r84_neg_paths" ]] && continue
+  while IFS= read -r _r84_neg_p; do
+    [[ -z "$_r84_neg_p" ]] && continue
+    [[ -e "$_r84_neg_root/${_r84_neg_p%.}" ]] && continue
+    _r84_neg_lo=$((_r84_neg_lineno > 3 ? _r84_neg_lineno - 3 : 1))
+    _r84_neg_hi=$((_r84_neg_lineno + 3))
+    if sed -n "${_r84_neg_lo},${_r84_neg_hi}p" "$_r84_neg_root/agent-service/ARCHITECTURE.md" | grep -qiE "$_r84_neg_marker_re"; then continue; fi
+    _r84_neg_violation=1
+  done <<< "$_r84_neg_paths"
+done < "$_r84_neg_root/agent-service/ARCHITECTURE.md"
+if [[ $_r84_neg_violation -eq 1 ]]; then
+  ok "rule84_path_claim_does_not_resolve_neg" "stale '.../runtime/engine/ExecutorAdapter' claim without historical marker correctly triggers FAIL"
+else
+  fail "rule84_path_claim_does_not_resolve_neg" "expected FAIL but stale path was accepted"
+fi
+
+## Negative-but-exempt: stale path with adjacent 'historical, pre-ADR-0079' marker -> Rule 84 PASS
+_r84_hist_root="$scratch/r84_hist"
+mkdir -p "$_r84_hist_root/agent-service"
+cat > "$_r84_hist_root/agent-service/ARCHITECTURE.md" <<'DOCEOF'
+---
+status: active
+---
+Historical, pre-ADR-0079: engine code used to live at
+agent-service/src/main/java/ascend/springai/service/runtime/engine/ExecutorAdapter.java.
+Today it lives in agent-execution-engine per ADR-0079.
+DOCEOF
+_r84_hist_violation=0
+_r84_hist_marker_re='historical|moved|extracted per ADR-[0-9]{4}|superseded|formerly|deferred|pre-ADR-[0-9]{4}'
+_r84_hist_lineno=0
+while IFS= read -r _r84_hist_line || [[ -n "$_r84_hist_line" ]]; do
+  _r84_hist_lineno=$((_r84_hist_lineno + 1))
+  _r84_hist_paths=$(echo "$_r84_hist_line" | grep -oE 'agent-[a-z-]+/src/main/java/[a-zA-Z0-9_/.-]+' | sort -u)
+  [[ -z "$_r84_hist_paths" ]] && continue
+  while IFS= read -r _r84_hist_p; do
+    [[ -z "$_r84_hist_p" ]] && continue
+    [[ -e "$_r84_hist_root/${_r84_hist_p%.}" ]] && continue
+    _r84_hist_lo=$((_r84_hist_lineno > 3 ? _r84_hist_lineno - 3 : 1))
+    _r84_hist_hi=$((_r84_hist_lineno + 3))
+    if sed -n "${_r84_hist_lo},${_r84_hist_hi}p" "$_r84_hist_root/agent-service/ARCHITECTURE.md" | grep -qiE "$_r84_hist_marker_re"; then continue; fi
+    _r84_hist_violation=1
+  done <<< "$_r84_hist_paths"
+done < "$_r84_hist_root/agent-service/ARCHITECTURE.md"
+if [[ $_r84_hist_violation -eq 0 ]]; then
+  ok "rule84_path_claim_historical_marker_exempts" "stale path with adjacent 'pre-ADR-0079' marker correctly accepted"
+else
+  fail "rule84_path_claim_historical_marker_exempts" "expected PASS but marker exemption was not honoured"
+fi
+
+}
+
+test_rule85_catalog_spi_row_matches_module_spi_metadata() {
+
+## Positive: catalog row package matches metadata + DFX spi_packages -> Rule 85 PASS
+_r85_pos_root="$scratch/r85_pos"
+mkdir -p "$_r85_pos_root/agent-service" "$_r85_pos_root/docs/contracts" "$_r85_pos_root/docs/dfx"
+cat > "$_r85_pos_root/agent-service/module-metadata.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+  - ascend.springai.service.runtime.resilience.spi
+DOCEOF
+cat > "$_r85_pos_root/docs/dfx/agent-service.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+  - ascend.springai.service.runtime.resilience.spi
+DOCEOF
+cat > "$_r85_pos_root/docs/contracts/contract-catalog.md" <<'DOCEOF'
+**Active SPI interfaces (1 total):**
+
+| Interface | Module | Package | Status |
+|---|---|---|---|
+| `ResilienceContract` | `agent-service` | `ascend.springai.service.runtime.resilience.spi` | shipped |
+DOCEOF
+_r85_pos_violation=0
+_r85_pos_pkg="ascend.springai.service.runtime.resilience.spi"
+_r85_pos_meta=$(awk '/^spi_packages:/{f=1; next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*-[[:space:]]+/{sub(/^[[:space:]]*-[[:space:]]+/, ""); print}' "$_r85_pos_root/agent-service/module-metadata.yaml")
+_r85_pos_dfx=$(awk '/^spi_packages:/{f=1; next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*-[[:space:]]+/{sub(/^[[:space:]]*-[[:space:]]+/, ""); print}' "$_r85_pos_root/docs/dfx/agent-service.yaml")
+echo "$_r85_pos_meta" | grep -qF "$_r85_pos_pkg" || _r85_pos_violation=1
+echo "$_r85_pos_dfx"  | grep -qF "$_r85_pos_pkg" || _r85_pos_violation=1
+if [[ $_r85_pos_violation -eq 0 ]]; then
+  ok "rule85_catalog_row_matches_metadata_pos" "catalog row matching metadata + DFX correctly accepted"
+else
+  fail "rule85_catalog_row_matches_metadata_pos" "expected PASS but metadata/DFX mismatch flagged"
+fi
+
+## Negative: catalog row package NOT in module metadata spi_packages (reviewer's rc5 evidence) -> Rule 85 FAIL
+_r85_neg_root="$scratch/r85_neg"
+mkdir -p "$_r85_neg_root/agent-service" "$_r85_neg_root/docs/contracts" "$_r85_neg_root/docs/dfx"
+cat > "$_r85_neg_root/agent-service/module-metadata.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+DOCEOF
+cat > "$_r85_neg_root/docs/dfx/agent-service.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+DOCEOF
+cat > "$_r85_neg_root/docs/contracts/contract-catalog.md" <<'DOCEOF'
+**Active SPI interfaces (1 total):**
+
+| Interface | Module | Package | Status |
+|---|---|---|---|
+| `ResilienceContract` | `agent-service` | `ascend.springai.service.runtime.resilience` | shipped |
+DOCEOF
+_r85_neg_violation=0
+_r85_neg_pkg="ascend.springai.service.runtime.resilience"
+_r85_neg_meta=$(awk '/^spi_packages:/{f=1; next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*-[[:space:]]+/{sub(/^[[:space:]]*-[[:space:]]+/, ""); print}' "$_r85_neg_root/agent-service/module-metadata.yaml")
+_r85_neg_match=0
+while IFS= read -r _r85_neg_entry; do
+  [[ -z "$_r85_neg_entry" ]] && continue
+  if [[ "$_r85_neg_pkg" == "$_r85_neg_entry" ]] || [[ "$_r85_neg_pkg" == "$_r85_neg_entry".* ]] || [[ "$_r85_neg_entry" == "$_r85_neg_pkg".* ]]; then
+    _r85_neg_match=1; break
+  fi
+done <<< "$_r85_neg_meta"
+if [[ $_r85_neg_match -eq 0 ]]; then _r85_neg_violation=1; fi
+if [[ $_r85_neg_violation -eq 1 ]]; then
+  ok "rule85_catalog_row_missing_from_metadata_neg" "catalog row without metadata backing correctly triggers FAIL"
+else
+  fail "rule85_catalog_row_missing_from_metadata_neg" "expected FAIL but package was matched against metadata"
+fi
+
+## Negative-but-exempt: row marked (internal) -> Rule 85 SKIPS and header count must exclude it
+_r85_int_root="$scratch/r85_int"
+mkdir -p "$_r85_int_root/agent-service" "$_r85_int_root/docs/contracts" "$_r85_int_root/docs/dfx"
+cat > "$_r85_int_root/agent-service/module-metadata.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+DOCEOF
+cat > "$_r85_int_root/docs/dfx/agent-service.yaml" <<'DOCEOF'
+module: agent-service
+spi_packages:
+  - ascend.springai.service.runtime.memory.spi
+DOCEOF
+cat > "$_r85_int_root/docs/contracts/contract-catalog.md" <<'DOCEOF'
+**Active SPI interfaces (1 total):**
+
+| Interface | Module | Package | Status |
+|---|---|---|---|
+| `GraphMemoryRepository` | `agent-service` | `ascend.springai.service.runtime.memory.spi` | shipped |
+| `InternalThing` | `agent-service` | `ascend.springai.service.runtime.internal` | (internal) — not in spi_packages |
+DOCEOF
+_r85_int_violation=0
+_r85_int_count=$(grep -cE '^\|[[:space:]]*`[A-Z]' "$_r85_int_root/docs/contracts/contract-catalog.md")
+_r85_int_active_count=$(grep -E '^\|[[:space:]]*`[A-Z]' "$_r85_int_root/docs/contracts/contract-catalog.md" | grep -vi '(internal)' | wc -l | tr -d ' ')
+_r85_int_header_total=$(grep -oE '^\*\*Active SPI interfaces \([0-9]+ total\):\*\*' "$_r85_int_root/docs/contracts/contract-catalog.md" | grep -oE '[0-9]+')
+if [[ "$_r85_int_active_count" != "$_r85_int_header_total" ]]; then _r85_int_violation=1; fi
+if [[ $_r85_int_violation -eq 0 ]]; then
+  ok "rule85_internal_marker_exempts_neg" "(internal) row correctly excluded from header count + metadata requirement"
+else
+  fail "rule85_internal_marker_exempts_neg" "expected PASS but header count mismatched non-(internal) rows"
+fi
+
 }
 
 test_rule83_design_only_contract_registered_in_catalog() {
@@ -3656,7 +3926,7 @@ fi
 # to a per-batch file. After all batches complete, we sort + concatenate the
 # results for deterministic stdout, then count PASS/FAIL.
 # ---------------------------------------------------------------------------
-TOTAL=129
+TOTAL=138
 
 _pre4_all_tests=$(declare -F | awk '/^declare -f test_rule/{print $3}' | sort)
 _pre4_jobs="${GATE_PARALLELISM_JOBS:-8}"

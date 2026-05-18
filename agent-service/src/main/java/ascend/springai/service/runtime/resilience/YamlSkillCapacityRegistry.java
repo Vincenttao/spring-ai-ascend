@@ -1,5 +1,7 @@
 package ascend.springai.service.runtime.resilience;
 
+import ascend.springai.service.runtime.resilience.spi.SkillCapacityRegistry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;

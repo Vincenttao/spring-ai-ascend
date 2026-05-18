@@ -111,8 +111,11 @@
 #  --- 2026-05-18 rc4 cross-constraint review response prevention wave (Rules 80-83; enforcers E113-E116) ---
 #  80.  s2c_callback_signal_historical_only_in_authority -- S2cCallbackSignal must appear only in historical/deleted/refactored paragraphs across CLAUDE.md/README.md/ADRs/contract-yamls/module-archs (P0-1 prevention, enforcer E113)
 #  81.  skeleton_module_has_no_production_java           -- modules whose ARCHITECTURE.md status: contains "skeleton" must contain only package-info.java or ADR-waived placeholder SPI stubs under src/main/java (P0-2 prevention, enforcer E114)
-#  82.  baseline_metrics_single_source                   -- architecture-status.yaml#architecture_sync_gate.baseline_metrics exists with required keys; README.md + gate/README.md point to the block by substring (P1-1 prevention, enforcer E115)
+#  82.  baseline_metrics_single_source                   -- architecture-status.yaml#architecture_sync_gate.baseline_metrics exists with required keys; README.md + gate/README.md point to the block by substring; rc6 strengthening: numeric-drift detection on entrypoint count phrases (P1-1 prevention + rc5-P1-1 strengthening, enforcer E115)
 #  83.  design_only_contract_registered_in_catalog       -- every docs/contracts/*.v1.yaml with status: design_only OR runtime_enforced: false is listed in contract-catalog.md AND cites an existing ADR (P1-3 prevention, enforcer E116)
+#  --- 2026-05-18 rc5 post-response review response prevention wave (Rules 84-85; enforcers E117-E118) ---
+#  84.  active_module_architecture_path_truth           -- every agent-*/ARCHITECTURE.md (status != skeleton|deferred) inline path claim "<module>/src/main/java/..." must resolve on disk OR carry a historical/moved/extracted-per-ADR/superseded/deferred marker within +/-3 lines (rc5 P0-1 prevention, enforcer E117)
+#  85.  catalog_spi_row_matches_module_spi_metadata     -- every non-(internal) row in contract-catalog.md SPI table must have its package in <module>/module-metadata.yaml#spi_packages AND docs/dfx/<module>.yaml#spi_packages; the (N total) header MUST equal the non-internal row count (rc5 P1-2 prevention, enforcer E118)
 
 set -uo pipefail
 export LC_ALL=C
@@ -3739,6 +3742,16 @@ if [[ $_r81_fail -eq 0 ]]; then pass_rule "skeleton_module_has_no_production_jav
 # README.md and gate/README.md MUST point to the block by substring match
 # "architecture_sync_gate.baseline_metrics" (so entrypoint counts have one
 # structured source -- rc4 review P1-1 closure).
+#
+# rc6 (2026-05-18) strengthening per rc5 review P1-1 closure: README.md and
+# gate/README.md ALSO MUST NOT carry an active "N <phrase>" count whose
+# value disagrees with the parsed baseline_metrics value for that phrase's
+# canonical key (e.g. "64 active gate rules" disagrees with
+# active_gate_checks: 68 -> FAIL). Historical / rc[N] baseline / pre-rc[N]
+# / previous / deprecated / superseded markers on the same line exempt the
+# claim (matches the marker convention Rule 80 uses for S2cCallbackSignal
+# historical-only paragraphs). Lines inside fenced code blocks (``` ... ```)
+# are also exempt so code examples cannot trigger false positives.
 # ---------------------------------------------------------------------------
 _r82_fail=0
 _r82_yaml="docs/governance/architecture-status.yaml"
@@ -3759,6 +3772,83 @@ for _r82_pointer_file in README.md gate/README.md; do
     _r82_fail=1
   fi
 done
+
+# rc6 strengthening: numeric-agreement check for entrypoint count phrases.
+# Phrase patterns are anchored after their leading number and matched only
+# OUTSIDE fenced code blocks AND only on lines NOT carrying a historical
+# marker. Each phrase maps to one baseline_metrics key whose parsed value
+# defines the expected number.
+_r82_phrases=(
+  "active gate rules|active_gate_checks"
+  "active rules|active_gate_checks"
+  "self-tests|gate_executable_test_cases"
+  "self-test cases|gate_executable_test_cases"
+  "active engineering rules|active_engineering_rules_post_rc6"
+  "enforcer rows|enforcer_rows"
+  "architecture-graph nodes|architecture_graph_nodes"
+  "graph nodes|architecture_graph_nodes"
+  "architecture-graph edges|architecture_graph_edges"
+  "graph edges|architecture_graph_edges"
+  "ADRs|adr_count"
+)
+_r82_marker_re='historical|rc[0-9]+ baseline|pre-rc[0-9]+|previous|prior|deprecated|superseded|formerly|was [0-9]'
+for _r82_pointer_file in README.md gate/README.md; do
+  [[ -f "$_r82_pointer_file" ]] || continue
+  _r82_in_code=0
+  _r82_lineno=0
+  while IFS= read -r _r82_line || [[ -n "$_r82_line" ]]; do
+    _r82_lineno=$((_r82_lineno + 1))
+    if [[ "$_r82_line" =~ ^[[:space:]]*\`\`\` ]]; then
+      _r82_in_code=$((1 - _r82_in_code))
+      continue
+    fi
+    [[ $_r82_in_code -eq 1 ]] && continue
+    if echo "$_r82_line" | grep -qiE "$_r82_marker_re"; then continue; fi
+    for _r82_pair in "${_r82_phrases[@]}"; do
+      _r82_phrase="${_r82_pair%%|*}"
+      _r82_key="${_r82_pair##*|}"
+      _r82_expected=$(awk -v key="$_r82_key" '
+        /^architecture_sync_gate:/{f=1; next}
+        f && /^[^[:space:]]/{exit}
+        f && $0 ~ "^[[:space:]]+"key":"{
+          sub(/^[[:space:]]+[a-zA-Z_]+:[[:space:]]*/, ""); sub(/[^0-9].*$/, ""); print; exit
+        }
+      ' "$_r82_yaml" 2>/dev/null)
+      [[ -z "$_r82_expected" ]] && continue
+      # First-occurrence-per-phrase-per-line check (the `if` rather than `while` avoids the
+      # replacement-vs-regex infinite-loop risk that would fire if the line uses tabs or
+      # multi-space separators between the number and the phrase). A line that carries the
+      # same phrase twice with different numbers is rare in practice; the second occurrence
+      # is silently accepted -- acceptable miss rate for this rule's scope.
+      if [[ "$_r82_line" =~ ([^0-9])([0-9]+)[[:space:]]+${_r82_phrase}([^a-zA-Z-]|$) ]] || [[ "$_r82_line" =~ ^([0-9]+)[[:space:]]+${_r82_phrase}([^a-zA-Z-]|$) ]]; then
+        if [[ -n "${BASH_REMATCH[2]:-}" ]]; then
+          _r82_actual="${BASH_REMATCH[2]}"
+        else
+          _r82_actual="${BASH_REMATCH[1]}"
+        fi
+        if [[ "$_r82_actual" != "$_r82_expected" ]]; then
+          fail_rule "baseline_metrics_single_source" "$_r82_pointer_file:$_r82_lineno claims '$_r82_actual $_r82_phrase' but architecture_sync_gate.baseline_metrics.$_r82_key = $_r82_expected -- Rule 82 / E115 (numeric drift)"
+          _r82_fail=1
+        fi
+      fi
+    done
+    # Tests-passed pattern: "Tests passed: N/N" where both N MUST equal gate_executable_test_cases.
+    if [[ "$_r82_line" =~ Tests[[:space:]]passed:[[:space:]]*([0-9]+)/([0-9]+) ]]; then
+      _r82_tp_left="${BASH_REMATCH[1]}"
+      _r82_tp_right="${BASH_REMATCH[2]}"
+      _r82_expected=$(awk '
+        /^architecture_sync_gate:/{f=1; next}
+        f && /^[^[:space:]]/{exit}
+        f && /^[[:space:]]+gate_executable_test_cases:/{sub(/^[[:space:]]+[a-zA-Z_]+:[[:space:]]*/, ""); sub(/[^0-9].*$/, ""); print; exit}
+      ' "$_r82_yaml" 2>/dev/null)
+      if [[ -n "$_r82_expected" ]] && { [[ "$_r82_tp_left" != "$_r82_expected" ]] || [[ "$_r82_tp_right" != "$_r82_expected" ]]; }; then
+        fail_rule "baseline_metrics_single_source" "$_r82_pointer_file:$_r82_lineno claims 'Tests passed: $_r82_tp_left/$_r82_tp_right' but baseline_metrics.gate_executable_test_cases = $_r82_expected -- Rule 82 / E115 (numeric drift)"
+        _r82_fail=1
+      fi
+    fi
+  done < "$_r82_pointer_file"
+done
+
 if [[ $_r82_fail -eq 0 ]]; then pass_rule "baseline_metrics_single_source"; fi
 
 # Rule 83 — design_only_contract_registered_in_catalog (enforcer E116)
@@ -3796,6 +3886,153 @@ for _r83_contract in docs/contracts/*.v1.yaml; do
   fi
 done
 if [[ $_r83_fail -eq 0 ]]; then pass_rule "design_only_contract_registered_in_catalog"; fi
+
+# ===========================================================================
+# 2026-05-18 rc5 post-response review response prevention wave -- Rules 84-85
+# Authority: docs/governance/rules/rule-84.md + rule-85.md
+#            + docs/reviews/2026-05-18-l0-rc5-post-response-architecture-review.en.md
+#            + docs/reviews/2026-05-18-l0-rc5-post-response-architecture-review-response.en.md
+# Closes finding families:
+#   P0-1 module-level ARCHITECTURE.md path claim drift after refactor   -> Rule 84
+#   P1-2 catalog SPI row not backed by module spi_packages metadata    -> Rule 85
+# ===========================================================================
+
+# Rule 84 — active_module_architecture_path_truth (enforcer E117)
+#
+# Every agent-*/ARCHITECTURE.md whose front-matter status: token does NOT
+# contain "skeleton" or "deferred" MUST have every inline path claim of the
+# shape "<module>/src/main/java/..." resolve to a real file on disk OR carry
+# a historical/moved/extracted-per-ADR/superseded/deferred/formerly marker
+# within +/-3 lines. Operationalises the rc5 review P0-1 closure: module-
+# level ARCHITECTURE path claims cannot lag behind real code locations
+# (Rule 81 already covers the symmetric skeleton case; Rule 84 covers the
+# active-module case Rule 81 cannot reach).
+# ---------------------------------------------------------------------------
+_r84_fail=0
+_r84_marker_re='historical|moved|extracted per ADR-[0-9]{4}|extracted at|was rooted|formerly|deferred|superseded|pre-ADR-[0-9]{4}|relocated|relocated to|migrated|per ADR-[0-9]{4} \(2026|post-ADR-[0-9]{4}'
+for _r84_arch in agent-*/ARCHITECTURE.md; do
+  [[ -f "$_r84_arch" ]] || continue
+  _r84_status=$(awk 'BEGIN{infm=0} /^---[[:space:]]*$/{infm=!infm; next} infm && /^status:/{print; exit}' "$_r84_arch" 2>/dev/null)
+  [[ "$_r84_status" == *skeleton* ]] && continue
+  [[ "$_r84_status" == *deferred* ]] && continue
+  # Walk each line looking for path claims; check existence or marker proximity.
+  _r84_lineno=0
+  while IFS= read -r _r84_line || [[ -n "$_r84_line" ]]; do
+    _r84_lineno=$((_r84_lineno + 1))
+    _r84_claims=$(echo "$_r84_line" | grep -oE 'agent-[a-z-]+/src/main/java/[a-zA-Z0-9_/.-]+' 2>/dev/null | sort -u)
+    [[ -z "$_r84_claims" ]] && continue
+    while IFS= read -r _r84_path; do
+      [[ -z "$_r84_path" ]] && continue
+      _r84_path_clean="${_r84_path%.}"  # strip trailing dots from prose
+      if [[ -e "$_r84_path_clean" ]] || [[ -e "${_r84_path_clean}.java" ]]; then continue; fi
+      _r84_lo=$((_r84_lineno > 3 ? _r84_lineno - 3 : 1))
+      _r84_hi=$((_r84_lineno + 3))
+      if sed -n "${_r84_lo},${_r84_hi}p" "$_r84_arch" 2>/dev/null | grep -qiE "$_r84_marker_re"; then continue; fi
+      fail_rule "active_module_architecture_path_truth" "$_r84_arch:$_r84_lineno claims path '$_r84_path_clean' that does not exist on disk and the surrounding +/-3 lines carry no historical/moved/extracted-per-ADR marker -- Rule 84 / E117"
+      _r84_fail=1
+    done <<< "$_r84_claims"
+  done < "$_r84_arch"
+done
+if [[ $_r84_fail -eq 0 ]]; then pass_rule "active_module_architecture_path_truth"; fi
+
+# Rule 85 — catalog_spi_row_matches_module_spi_metadata (enforcer E118)
+#
+# Every row in docs/contracts/contract-catalog.md "Active SPI interfaces (N
+# total)" table whose Status column does NOT contain "(internal)" MUST have
+# its Module column resolve to a module whose
+# module-metadata.yaml#spi_packages contains the row's Package column value
+# (exact OR as a .spi-prefix sub-package match), AND the same module's
+# docs/dfx/<module>.yaml#spi_packages MUST contain the same package.
+# Operationalises rc5 review P1-2 closure: catalog SPI commitments must be
+# backed by SPI metadata declarations on both sides of the Rule 78 set.
+# ---------------------------------------------------------------------------
+_r85_fail=0
+_r85_catalog="docs/contracts/contract-catalog.md"
+if [[ -f "$_r85_catalog" ]]; then
+  # Find the SPI section header and total claim. Extract rows between header and the next
+  # bold-heading separator. Header pattern: **Active SPI interfaces (N total):**
+  _r85_header_lineno=$(grep -nE '^\*\*Active SPI interfaces \([0-9]+ total\):\*\*' "$_r85_catalog" 2>/dev/null | head -1 | cut -d: -f1)
+  _r85_header_total=$(grep -oE '^\*\*Active SPI interfaces \([0-9]+ total\):\*\*' "$_r85_catalog" 2>/dev/null | head -1 | grep -oE '[0-9]+')
+  if [[ -z "$_r85_header_lineno" ]]; then
+    fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog missing header '**Active SPI interfaces (N total):**' -- Rule 85 / E118"
+    _r85_fail=1
+  else
+    # Scan rows starting at header_lineno; stop at first ** heading after a blank line, or at the next ** heading.
+    _r85_active_rows=0
+    _r85_lineno=0
+    _r85_in_table=0
+    while IFS= read -r _r85_line || [[ -n "$_r85_line" ]]; do
+      _r85_lineno=$((_r85_lineno + 1))
+      [[ $_r85_lineno -le $_r85_header_lineno ]] && continue
+      # Stop scanning once we hit the next bold section heading.
+      if [[ "$_r85_line" =~ ^\*\* ]] && [[ ! "$_r85_line" =~ ^\*\*Active\ SPI ]]; then break; fi
+      # Table separator marker: skip rows that look like |---|---|---|---|
+      [[ "$_r85_line" =~ ^\|[-:[:space:]\|]+\|$ ]] && continue
+      [[ ! "$_r85_line" =~ ^\| ]] && continue
+      [[ "$_r85_line" =~ ^\|[[:space:]]*Interface ]] && continue
+      # Parse | Interface | Module | Package | Status |
+      _r85_iface=$(echo "$_r85_line" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2}' | tr -d '`')
+      _r85_mod=$(echo "$_r85_line" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3); print $3}' | tr -d '`')
+      _r85_pkg=$(echo "$_r85_line" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}' | tr -d '`')
+      _r85_status=$(echo "$_r85_line" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $5); print $5}')
+      [[ -z "$_r85_iface" || -z "$_r85_mod" || -z "$_r85_pkg" ]] && continue
+      # Internal-marker exemption: skip the metadata + DFX checks AND exclude from the count.
+      if echo "$_r85_status" | grep -qi '(internal)'; then continue; fi
+      _r85_active_rows=$((_r85_active_rows + 1))
+      _r85_meta="$_r85_mod/module-metadata.yaml"
+      _r85_dfx="docs/dfx/$_r85_mod.yaml"
+      if [[ ! -f "$_r85_meta" ]]; then
+        fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog:$_r85_lineno row for $_r85_iface points at module $_r85_mod but $_r85_meta does not exist -- Rule 85 / E118"
+        _r85_fail=1; continue
+      fi
+      if [[ ! -f "$_r85_dfx" ]]; then
+        fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog:$_r85_lineno row for $_r85_iface points at module $_r85_mod but $_r85_dfx does not exist -- Rule 85 / E118"
+        _r85_fail=1; continue
+      fi
+      # Extract metadata spi_packages list (only entries under the top-level spi_packages: block;
+      # stop at the next non-indented key).
+      _r85_meta_pkgs=$(awk '
+        /^spi_packages:/{f=1; next}
+        f && /^[^[:space:]]/{exit}
+        f && /^[[:space:]]*-[[:space:]]+/{sub(/^[[:space:]]*-[[:space:]]+/, ""); sub(/[[:space:]]+#.*$/, ""); print}
+      ' "$_r85_meta" 2>/dev/null)
+      _r85_dfx_pkgs=$(awk '
+        /^spi_packages:/{f=1; next}
+        f && /^[^[:space:]]/{exit}
+        f && /^[[:space:]]*-[[:space:]]+/{sub(/^[[:space:]]*-[[:space:]]+/, ""); sub(/[[:space:]]+#.*$/, ""); print}
+      ' "$_r85_dfx" 2>/dev/null)
+      # Match: exact OR catalog-pkg starts with metadata-pkg as a prefix followed by . (sub-package).
+      _r85_meta_match=0
+      while IFS= read -r _r85_meta_entry; do
+        [[ -z "$_r85_meta_entry" ]] && continue
+        if [[ "$_r85_pkg" == "$_r85_meta_entry" ]] || [[ "$_r85_pkg" == "$_r85_meta_entry".* ]] || [[ "$_r85_meta_entry" == "$_r85_pkg".* ]]; then
+          _r85_meta_match=1; break
+        fi
+      done <<< "$_r85_meta_pkgs"
+      if [[ $_r85_meta_match -eq 0 ]]; then
+        fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog:$_r85_lineno row for $_r85_iface declares package '$_r85_pkg' not present in $_r85_meta#spi_packages: ($_r85_meta_pkgs) -- Rule 85 / E118"
+        _r85_fail=1; continue
+      fi
+      _r85_dfx_match=0
+      while IFS= read -r _r85_dfx_entry; do
+        [[ -z "$_r85_dfx_entry" ]] && continue
+        if [[ "$_r85_pkg" == "$_r85_dfx_entry" ]] || [[ "$_r85_pkg" == "$_r85_dfx_entry".* ]] || [[ "$_r85_dfx_entry" == "$_r85_pkg".* ]]; then
+          _r85_dfx_match=1; break
+        fi
+      done <<< "$_r85_dfx_pkgs"
+      if [[ $_r85_dfx_match -eq 0 ]]; then
+        fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog:$_r85_lineno row for $_r85_iface declares package '$_r85_pkg' not present in $_r85_dfx#spi_packages: ($_r85_dfx_pkgs) -- Rule 85 / E118"
+        _r85_fail=1; continue
+      fi
+    done < "$_r85_catalog"
+    # Header count consistency: (N total) MUST equal the number of non-internal rows.
+    if [[ -n "$_r85_header_total" ]] && [[ "$_r85_header_total" != "$_r85_active_rows" ]]; then
+      fail_rule "catalog_spi_row_matches_module_spi_metadata" "$_r85_catalog header claims '$_r85_header_total total' but counted $_r85_active_rows non-(internal) SPI rows -- Rule 85 / E118"
+      _r85_fail=1
+    fi
+  fi
+fi
+if [[ $_r85_fail -eq 0 ]]; then pass_rule "catalog_spi_row_matches_module_spi_metadata"; fi
 
 # ---------------------------------------------------------------------------
 # Summary

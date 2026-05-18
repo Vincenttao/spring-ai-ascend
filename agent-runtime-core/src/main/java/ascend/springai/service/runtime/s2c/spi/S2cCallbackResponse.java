@@ -12,7 +12,7 @@ import java.util.UUID;
  * <p>The response {@code callbackId} MUST match the originating request's
  * {@code callbackId}. Mismatch raises a validation error and the Run
  * transitions to FAILED with reason
- * {@link ascend.springai.service.runtime.resilience.SuspendReason.AwaitClientCallback#S2C_RESPONSE_INVALID}.
+ * {@link ascend.springai.service.runtime.resilience.spi.SuspendReason.AwaitClientCallback#S2C_RESPONSE_INVALID}.
  *
  * <p>Lives in {@code runtime.s2c.spi} (moved from {@code runtime.s2c} in
  * v2.0.0-rc3 per cross-constraint audit α-4 / β-2) so the SPI literally imports

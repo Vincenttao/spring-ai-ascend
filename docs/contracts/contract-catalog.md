@@ -28,7 +28,7 @@ SPI impls: thread-safe, no null returns. SPIs that process tenant-owned runtime 
 | `Orchestrator` | `agent-runtime-core` | `ascend.springai.service.runtime.orchestration.spi` | shipped — W0 reference impl (`SyncOrchestrator`, in `agent-service`) |
 | `S2cCallbackTransport` | `agent-runtime-core` | `ascend.springai.service.runtime.s2c.spi` | shipped — W2.x; `InMemoryS2cCallbackTransport` reference (ADR-0074) |
 | `GraphMemoryRepository` | `agent-service` | `ascend.springai.service.runtime.memory.spi` | shipped — interface only; Graphiti W1 reference (ADR-0034) |
-| `ResilienceContract` | `agent-service` | `ascend.springai.service.runtime.resilience` | shipped — W0 Resilience4j-backed impl (`DefaultSkillResilienceContract`); per-skill capacity via `YamlResilienceContract` |
+| `ResilienceContract` | `agent-service` | `ascend.springai.service.runtime.resilience.spi` | shipped — W0 Resilience4j-backed impl (`DefaultSkillResilienceContract`); per-skill capacity via `YamlResilienceContract`; package home moved to `.spi` per ADR-0080 (v2.0.0-rc6) to align with Rules 32/77/78 — implementations stay in `runtime.resilience.*` |
 | `ExecutorAdapter` | `agent-execution-engine` | `ascend.springai.engine.spi` | shipped — W2.x; reference adapters in `agent-service` (ADR-0072 / ADR-0079) |
 | `GraphExecutor` | `agent-execution-engine` | `ascend.springai.engine.spi` | shipped — `extends ExecutorAdapter`; W0 reference impl (`SequentialGraphExecutor`, in `agent-service`) |
 | `AgentLoopExecutor` | `agent-execution-engine` | `ascend.springai.engine.spi` | shipped — `extends ExecutorAdapter`; W0 reference impl (`IterativeAgentLoopExecutor`, in `agent-service`) |

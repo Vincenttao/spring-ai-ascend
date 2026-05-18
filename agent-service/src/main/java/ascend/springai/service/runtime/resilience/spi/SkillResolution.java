@@ -1,4 +1,4 @@
-package ascend.springai.service.runtime.resilience;
+package ascend.springai.service.runtime.resilience.spi;
 
 /**
  * Outcome of {@link ResilienceContract#resolve(String, String)}. Either the caller is

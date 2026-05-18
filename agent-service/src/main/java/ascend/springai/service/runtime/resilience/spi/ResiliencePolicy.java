@@ -1,4 +1,4 @@
-package ascend.springai.service.runtime.resilience;
+package ascend.springai.service.runtime.resilience.spi;
 
 /**
  * Immutable triple of Resilience4j policy names for one operation.

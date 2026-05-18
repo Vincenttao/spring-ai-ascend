@@ -11,7 +11,7 @@ import ascend.springai.service.runtime.orchestration.spi.Orchestrator;
 import ascend.springai.service.runtime.orchestration.spi.RunContext;
 import ascend.springai.service.runtime.orchestration.spi.SuspendSignal;
 import ascend.springai.service.runtime.posture.AppPostureGate;
-import ascend.springai.service.runtime.resilience.SuspendReason;
+import ascend.springai.service.runtime.resilience.spi.SuspendReason;
 import ascend.springai.service.runtime.runs.Run;
 import ascend.springai.service.runtime.runs.RunMode;
 import ascend.springai.service.runtime.runs.spi.RunRepository;

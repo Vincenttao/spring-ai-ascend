@@ -52,6 +52,7 @@ principles:
       - Rule-33   # NEW (ADR-0068)
       - Rule-34   # NEW (ADR-0068)
       - Rule-81   # NEW (rc4 review P0-2 — skeleton-module identity)
+      - Rule-84   # NEW (rc5 post-response review P0-1 — active module ARCHITECTURE path truth)
 
   - id: P-D
     name: "SPI-Aligned, DFX-Explicit, Spec-Driven, TCK-Tested"
@@ -67,8 +68,9 @@ principles:
       - Rule-4
       - Rule-32
       - Rule-79
-      - Rule-82   # NEW (rc4 review P1-1 — baseline-metrics single source)
+      - Rule-82   # rc4 review P1-1 — baseline-metrics single source; rc5 strengthening adds numeric-agreement check
       - Rule-83   # NEW (rc4 review P1-3 — design-only contract registration)
+      - Rule-85   # NEW (rc5 post-response review P1-2 — catalog SPI row matches module SPI metadata)
     deferred_operationalisers:
       - Rule-22   # PayloadCodec — deferred
 
