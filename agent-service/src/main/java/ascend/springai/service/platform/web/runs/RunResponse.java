@@ -13,20 +13,23 @@ import java.util.UUID;
  * <p>Field set is intentionally narrow at L1 — runId, status, capabilityName,
  * createdAt, updatedAt. Future waves add cost, budget, suspend reason, etc.
  *
- * <p>Every component is annotated {@code @Schema(requiredMode = REQUIRED)} so
- * springdoc declares the OpenAPI {@code required:} list for live spec generation
- * matching the pinned snapshot in
+ * <p>The class-level {@code @Schema(requiredProperties = ...)} declares the
+ * OpenAPI {@code required:} list for live spec generation matching the pinned
+ * snapshot in
  * {@code agent-service/src/test/resources/contracts/openapi-v1-pinned.yaml}.
- * Without the annotation, Spring Boot 4 + Spring AI 2.0.0-M5 + springdoc emits
- * Java record components as optional in the live spec, drifting from the pinned
- * contract (closed in rc9 per CI-2).
+ * Without it, Spring Boot 4 + springdoc 3.0.3 emits Java record components as
+ * optional in the live spec, drifting from the pinned contract (closed in rc9
+ * per CI-2). Class-level {@code requiredProperties} is more reliable than
+ * per-component {@code @Schema(requiredMode = REQUIRED)} on this springdoc
+ * version with Java records.
  */
+@Schema(requiredProperties = {"runId", "status", "capabilityName", "createdAt", "updatedAt"})
 public record RunResponse(
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID runId,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String capabilityName,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant updatedAt
+        UUID runId,
+        String status,
+        String capabilityName,
+        Instant createdAt,
+        Instant updatedAt
 ) {
 
     public static RunResponse from(Run run) {

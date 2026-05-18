@@ -2,6 +2,7 @@ package ascend.springai.service.platform.idempotency;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -41,27 +42,35 @@ public class IdempotencyStoreAutoConfiguration {
 
     /**
      * Wires {@link JdbcIdempotencyStore} when no other {@link IdempotencyStore}
-     * bean is registered. The {@code DataSource} parameter is auto-injected by
-     * Spring; absence of a {@code DataSource} bean fails autowiring with a
-     * clear {@code NoSuchBeanDefinitionException}, which is the correct
-     * production behavior under {@code research}/{@code prod} posture (a
-     * durable backing store is mandatory — see {@code PostureBootGuard}).
+     * bean is registered AND a {@link DataSource} bean is available at injection
+     * time. Uses {@link ObjectProvider} to defer DataSource resolution past the
+     * Spring Boot 4 conditional-evaluation order hazard: a naive
+     * {@code @ConditionalOnBean(DataSource.class)} on a regular
+     * {@code @Configuration} class evaluates BEFORE
+     * {@code DataSourceAutoConfiguration} registers the DataSource (the very
+     * defect that produced the rc1→rc8 CI red trunk). {@code ObjectProvider}
+     * is resolved at bean-factory time and returns {@code null} when no
+     * DataSource exists; the method then returns {@code null} so Spring does
+     * not register an {@link IdempotencyStore} bean — the same outcome the
+     * dropped {@code @ConditionalOnBean(DataSource.class)} was meant to deliver.
+     * Returning {@code null} from a {@code @Bean} method is documented Spring
+     * behaviour: the registration is skipped and downstream
+     * {@code @ConditionalOnMissingBean} consumers see the absence.
      *
-     * <p>Note (rc9 / 2026-05-19): an earlier revision carried
-     * {@code @ConditionalOnBean(DataSource.class)} to allow graceful absence
-     * of a DataSource bean. Under Spring Boot 4 that condition evaluates on
-     * regular {@code @Configuration} classes BEFORE
-     * {@code DataSourceAutoConfiguration} registers the DataSource, so the
-     * condition mis-fires and {@code jdbcIdempotencyStore} silently fails to
-     * register — observed in CI as {@code No qualifying bean of type
-     * IdempotencyStore} across every {@code @Testcontainers} IT. The
-     * condition is dropped; the alternative (converting this class to a true
-     * auto-configuration with {@code @AutoConfigureAfter(DataSourceAutoConfiguration.class)}
-     * + {@code META-INF/spring/.../AutoConfiguration.imports}) is W2 work.
+     * <p>Note (rc9 / ADR-0083): the proper W2 fix is to convert this class to
+     * a true Spring Boot auto-configuration via
+     * {@code META-INF/spring/.../AutoConfiguration.imports} plus
+     * {@code @AutoConfigureAfter(DataSourceAutoConfiguration.class)}. That
+     * refactor is out of rc9 scope.
      */
     @Bean
     @ConditionalOnMissingBean(IdempotencyStore.class)
-    IdempotencyStore jdbcIdempotencyStore(DataSource ds, IdempotencyProperties props) {
+    IdempotencyStore jdbcIdempotencyStore(ObjectProvider<DataSource> dsProvider, IdempotencyProperties props) {
+        DataSource ds = dsProvider.getIfAvailable();
+        if (ds == null) {
+            LOG.debug("IdempotencyStore not registered: no DataSource bean available. PostureBootGuard will reject startup in research/prod.");
+            return null;
+        }
         LOG.info("Wiring JdbcIdempotencyStore (DataSource present, ttl={}).", props.ttl());
         return new JdbcIdempotencyStore(JdbcClient.create(ds), Clock.systemUTC(), props.ttl());
     }
