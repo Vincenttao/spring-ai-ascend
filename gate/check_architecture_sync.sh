@@ -106,6 +106,13 @@
 #  73.  gate_config_well_formed                          -- gate/config.yaml validates against gate/config.schema.yaml (required keys, types, ranges, enums, no unknown keys) (Rule 73 / PR-E1, enforcer E103)
 #  --- 2026-05-18 Linux-first dev environment policy (enforcer E104) ---
 #  74.  linux_first_dev_doc_present                      -- docs/governance/dev-environment.md exists + recommends WSL2/WSL1/Linux for verification (Rule 74 / PR-E7, enforcer E104)
+#  --- 2026-05-18 SPI metadata integrity wave (Rules 75-78; enforcers E105-E111) ---
+#  --- 2026-05-18 Beyond-SDD response wave (Rule 79; enforcer E112) ---
+#  --- 2026-05-18 rc4 cross-constraint review response prevention wave (Rules 80-83; enforcers E113-E116) ---
+#  80.  s2c_callback_signal_historical_only_in_authority -- S2cCallbackSignal must appear only in historical/deleted/refactored paragraphs across CLAUDE.md/README.md/ADRs/contract-yamls/module-archs (P0-1 prevention, enforcer E113)
+#  81.  skeleton_module_has_no_production_java           -- modules whose ARCHITECTURE.md status: contains "skeleton" must contain only package-info.java or ADR-waived placeholder SPI stubs under src/main/java (P0-2 prevention, enforcer E114)
+#  82.  baseline_metrics_single_source                   -- architecture-status.yaml#architecture_sync_gate.baseline_metrics exists with required keys; README.md + gate/README.md point to the block by substring (P1-1 prevention, enforcer E115)
+#  83.  design_only_contract_registered_in_catalog       -- every docs/contracts/*.v1.yaml with status: design_only OR runtime_enforced: false is listed in contract-catalog.md AND cites an existing ADR (P1-3 prevention, enforcer E116)
 
 set -uo pipefail
 export LC_ALL=C
@@ -3652,6 +3659,143 @@ if [[ -f "$_r79_card" ]] && ! grep -qF 'docs/runbooks/debug-first-evidence.md' "
   _r79_fail=1
 fi
 if [[ $_r79_fail -eq 0 ]]; then pass_rule "rule_79_runbook_present_and_cited"; fi
+
+# ===========================================================================
+# 2026-05-18 rc4 cross-constraint review response prevention wave -- Rules 80-83
+# Authority: docs/governance/rules/rule-80.md ... rule-83.md
+#            + docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review.en.md
+#            + docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review-response.en.md
+# Closes finding families:
+#   P0-1 ADR-vs-code drift after rc3 S2C refactor          -> Rule 80
+#   P0-2 module-status drift after engine extraction         -> Rule 81
+#   P1-1 baseline-count drift across entrypoints             -> Rule 82
+#   P1-3 design-only contracts unregistered / dangling auth  -> Rule 83
+# ===========================================================================
+
+# Rule 80 — s2c_callback_signal_historical_only_in_authority (enforcer E113)
+#
+# In authoritative entrypoints (CLAUDE.md, README.md, root ARCHITECTURE.md,
+# agent-*/ARCHITECTURE.md, docs/contracts/*.v1.yaml, docs/adr/*.yaml,
+# docs/adr/*.md), the deleted Java type name S2cCallbackSignal MUST appear
+# only in paragraphs marked historical / deleted / refactored from /
+# amendments / rc3-unification (within +/-5 lines). v2.0.0-rc3 unified S2C
+# suspension into the checked SuspendSignal.forClientCallback(...) variant
+# (ADR-0074 2026-05-18 amendment); live current-state claims naming
+# S2cCallbackSignal are forbidden in authoritative docs.
+# ---------------------------------------------------------------------------
+_r80_fail=0
+_r80_marker_re='historical|deleted|refactored|rc3-unification|amendment|forClientCallback|prior parallel|2026-05-16 design|unifies|unified|rc3 unif'
+for _r80_file in CLAUDE.md README.md ARCHITECTURE.md docs/contracts/*.v1.yaml docs/adr/*.yaml docs/adr/*.md agent-*/ARCHITECTURE.md; do
+  [[ -f "$_r80_file" ]] || continue
+  while IFS= read -r _r80_match; do
+    [[ -z "$_r80_match" ]] && continue
+    _r80_lineno="${_r80_match%%:*}"
+    [[ -z "$_r80_lineno" || ! "$_r80_lineno" =~ ^[0-9]+$ ]] && continue
+    _r80_lo=$((_r80_lineno > 5 ? _r80_lineno - 5 : 1))
+    _r80_hi=$((_r80_lineno + 5))
+    if ! sed -n "${_r80_lo},${_r80_hi}p" "$_r80_file" 2>/dev/null | grep -qiE "$_r80_marker_re"; then
+      fail_rule "s2c_callback_signal_historical_only_in_authority" "$_r80_file:$_r80_lineno mentions S2cCallbackSignal without a historical/deleted/refactored/amendment marker within +/-5 lines -- Rule 80 / E113"
+      _r80_fail=1
+    fi
+  done < <(grep -nF 'S2cCallbackSignal' "$_r80_file" 2>/dev/null)
+done
+if [[ $_r80_fail -eq 0 ]]; then pass_rule "s2c_callback_signal_historical_only_in_authority"; fi
+
+# Rule 81 — skeleton_module_has_no_production_java (enforcer E114)
+#
+# For every reactor module whose root ARCHITECTURE.md frontmatter status:
+# contains the token "skeleton", the module's src/main/java/**/*.java tree
+# MUST contain only package-info.java OR placeholder SPI stubs whose first
+# 30 lines name a "placeholder" keyword with an ADR-NNNN waiver. Modules
+# with extracted production code (e.g., agent-execution-engine post-ADR-0079,
+# agent-middleware post-ADR-0073) MUST NOT carry a "skeleton" status.
+# ---------------------------------------------------------------------------
+_r81_fail=0
+for _r81_arch in agent-*/ARCHITECTURE.md; do
+  [[ -f "$_r81_arch" ]] || continue
+  _r81_status=$(awk 'BEGIN{infm=0} /^---[[:space:]]*$/{infm=!infm; next} infm && /^status:/{print; exit}' "$_r81_arch" 2>/dev/null)
+  if [[ "$_r81_status" == *skeleton* ]]; then
+    _r81_module="${_r81_arch%/ARCHITECTURE.md}"
+    _r81_src="$_r81_module/src/main/java"
+    [[ -d "$_r81_src" ]] || continue
+    while IFS= read -r _r81_java; do
+      [[ -z "$_r81_java" ]] && continue
+      _r81_basename="$(basename "$_r81_java")"
+      if [[ "$_r81_basename" == "package-info.java" ]]; then continue; fi
+      if head -n 30 "$_r81_java" 2>/dev/null | grep -qE 'placeholder.*ADR-[0-9]{4}|ADR-[0-9]{4}.*placeholder'; then continue; fi
+      fail_rule "skeleton_module_has_no_production_java" "$_r81_java in skeleton module $_r81_module is neither package-info.java nor an ADR-waived placeholder -- Rule 81 / E114 (status claims skeleton but production code is present)"
+      _r81_fail=1
+    done < <(find "$_r81_src" -name '*.java' -type f 2>/dev/null)
+  fi
+done
+if [[ $_r81_fail -eq 0 ]]; then pass_rule "skeleton_module_has_no_production_java"; fi
+
+# Rule 82 — baseline_metrics_single_source (enforcer E115)
+#
+# docs/governance/architecture-status.yaml MUST contain a baseline_metrics:
+# block under architecture_sync_gate: with at minimum these required keys:
+# active_engineering_rules, active_gate_checks, gate_executable_test_cases,
+# enforcer_rows, architecture_graph_nodes, architecture_graph_edges.
+# README.md and gate/README.md MUST point to the block by substring match
+# "architecture_sync_gate.baseline_metrics" (so entrypoint counts have one
+# structured source -- rc4 review P1-1 closure).
+# ---------------------------------------------------------------------------
+_r82_fail=0
+_r82_yaml="docs/governance/architecture-status.yaml"
+if [[ ! -f "$_r82_yaml" ]]; then
+  fail_rule "baseline_metrics_single_source" "$_r82_yaml missing -- Rule 82 / E115"
+  _r82_fail=1
+else
+  for _r82_key in active_engineering_rules active_gate_checks gate_executable_test_cases enforcer_rows architecture_graph_nodes architecture_graph_edges; do
+    if ! grep -qE "^[[:space:]]+${_r82_key}:" "$_r82_yaml" 2>/dev/null; then
+      fail_rule "baseline_metrics_single_source" "$_r82_yaml missing required key '${_r82_key}:' under architecture_sync_gate.baseline_metrics -- Rule 82 / E115"
+      _r82_fail=1
+    fi
+  done
+fi
+for _r82_pointer_file in README.md gate/README.md; do
+  if [[ -f "$_r82_pointer_file" ]] && ! grep -qF 'architecture_sync_gate.baseline_metrics' "$_r82_pointer_file" 2>/dev/null; then
+    fail_rule "baseline_metrics_single_source" "$_r82_pointer_file does not reference architecture_sync_gate.baseline_metrics -- Rule 82 / E115 (entrypoint must point to single source)"
+    _r82_fail=1
+  fi
+done
+if [[ $_r82_fail -eq 0 ]]; then pass_rule "baseline_metrics_single_source"; fi
+
+# Rule 83 — design_only_contract_registered_in_catalog (enforcer E116)
+#
+# Every docs/contracts/*.v1.yaml with status: design_only (or runtime_enforced:
+# false) MUST (a) be listed by file basename in docs/contracts/contract-catalog.md,
+# AND (b) cite at least one ADR-NNNN reference whose file exists under
+# docs/adr/. Operationalises the rc4 review P1-3 prevention: design-only
+# contracts cannot drift unregistered, and cited ADRs cannot dangle.
+# ---------------------------------------------------------------------------
+_r83_fail=0
+_r83_catalog="docs/contracts/contract-catalog.md"
+for _r83_contract in docs/contracts/*.v1.yaml; do
+  [[ -f "$_r83_contract" ]] || continue
+  _r83_status=$(grep -E '^status:' "$_r83_contract" 2>/dev/null | head -1 || true)
+  _r83_runtime=$(grep -E '^runtime_enforced:' "$_r83_contract" 2>/dev/null | head -1 || true)
+  if [[ "$_r83_status" == *design_only* ]] || [[ "$_r83_runtime" == *false* ]]; then
+    _r83_name="$(basename "$_r83_contract")"
+    if [[ ! -f "$_r83_catalog" ]] || ! grep -qF "$_r83_name" "$_r83_catalog" 2>/dev/null; then
+      fail_rule "design_only_contract_registered_in_catalog" "$_r83_contract is design-only/runtime_enforced=false but not listed in $_r83_catalog -- Rule 83 / E116"
+      _r83_fail=1
+    fi
+    _r83_adr_ok=0
+    while IFS= read -r _r83_adr; do
+      [[ -z "$_r83_adr" ]] && continue
+      _r83_num="${_r83_adr#ADR-}"
+      if compgen -G "docs/adr/${_r83_num}-*.yaml" > /dev/null || compgen -G "docs/adr/${_r83_num}-*.md" > /dev/null; then
+        _r83_adr_ok=1
+      fi
+    done < <(grep -oE 'ADR-[0-9]{4}' "$_r83_contract" 2>/dev/null | sort -u)
+    if [[ $_r83_adr_ok -eq 0 ]]; then
+      fail_rule "design_only_contract_registered_in_catalog" "$_r83_contract cites no ADR file that exists under docs/adr/ -- Rule 83 / E116 (authority chain broken)"
+      _r83_fail=1
+    fi
+  fi
+done
+if [[ $_r83_fail -eq 0 ]]; then pass_rule "design_only_contract_registered_in_catalog"; fi
 
 # ---------------------------------------------------------------------------
 # Summary

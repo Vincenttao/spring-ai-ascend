@@ -385,6 +385,36 @@ Enforced by [`rule-78.md`](docs/governance/rules/rule-78.md).
 
 ---
 
+### rc4 cross-constraint review response prevention wave (2026-05-18)
+#### Rule 80 — S2cCallbackSignal Historical-Only in Authority
+
+**Across active accepted ADRs, `CLAUDE.md`, `README.md`, `agent-*/ARCHITECTURE.md`, and `docs/contracts/*.v1.yaml`, the deleted Java type name `S2cCallbackSignal` MUST appear only inside paragraphs (or yaml comment blocks) that explicitly mark the reference as historical via one of the markers `historical`, `deleted`, `refactored from`, `rc3-unification`, or `amendments`. Live current-state claims using `S2cCallbackSignal` are forbidden — S2C suspension now flows through the checked `SuspendSignal.forClientCallback(...)` variant per ADR-0074 (2026-05-18 amendment).**
+
+Enforced by [`rule-80.md`](docs/governance/rules/rule-80.md).
+
+---
+#### Rule 81 — Skeleton Module Has No Production Java
+
+**For every reactor module whose root `ARCHITECTURE.md` frontmatter `status:` field contains the token `skeleton`, the module's `src/main/java/**/*.java` tree MUST contain only `package-info.java` files OR placeholder SPI stub files whose first 30 lines name a `placeholder` keyword with an `ADR-NNNN` waiver. Modules with extracted production code MUST NOT carry a `skeleton` status. Operationalises the rc4 review P0-2 closure (agent-execution-engine still claimed skeleton after ADR-0079 extraction).**
+
+Enforced by [`rule-81.md`](docs/governance/rules/rule-81.md).
+
+---
+#### Rule 82 — Baseline Metrics Single Source
+
+**`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` MUST exist with required keys `active_engineering_rules`, `active_gate_checks`, `gate_executable_test_cases`, `enforcer_rows`, `architecture_graph_nodes`, `architecture_graph_edges`. Numeric baseline claims in `README.md` and `gate/README.md` MUST point to this structured block (substring `architecture_sync_gate.baseline_metrics` present). Operationalises the rc4 review P1-1 closure: entrypoint counts have one source.**
+
+Enforced by [`rule-82.md`](docs/governance/rules/rule-82.md).
+
+---
+#### Rule 83 — Design-Only Contract Registered in Catalog
+
+**Every `docs/contracts/*.v1.yaml` whose `status:` value is `design_only` OR whose `runtime_enforced:` is `false` MUST (a) be listed by file basename in `docs/contracts/contract-catalog.md`, AND (b) cite at least one `ADR-NNNN` whose file exists under `docs/adr/`. Operationalises the rc4 review P1-3 prevention: design-only contracts cannot drift unregistered, and cited ADRs cannot dangle.**
+
+Enforced by [`rule-83.md`](docs/governance/rules/rule-83.md).
+
+---
+
 ## Deferred Rules
 
 On-demand: [`docs/CLAUDE-deferred.md`](docs/CLAUDE-deferred.md). Currently deferred: Rules 7, 8, 13, 14, 15, 16, 17, 18, 19, 22, 23, 26, 27 + sub-clauses (Rules 11, 24, 29.c, 72 activated 2026-05-18 per Wave 4).

@@ -22,8 +22,12 @@
 # 2026-05-18 SPI metadata integrity wave: +4 rules (75-78, ~1.5K) plus Rule
 # 42/47 kernel clarifications (~0.3K) raised CLAUDE.md from 24,699 to ~26,600.
 # Ceiling raised from 25,000 to 28,000 — future PR2 still targets 8,000 via
-# kernel-shrink. Headroom of ~1,400 bytes admits one more small rule wave.
-CLAUDE.md=28000
+# kernel-shrink.
+# 2026-05-18 rc4 cross-constraint review response prevention wave: +4 rules
+# (80-83, ~1.7K) raised CLAUDE.md to ~29,800. Ceiling raised from 28,000 to
+# 32,000 — future PR2 still targets 8,000 via kernel-shrink. Headroom of ~2.2K
+# bytes admits one more small rule wave.
+CLAUDE.md=32000
 ARCHITECTURE.md=80000
 AGENTS.md=5000
 docs/governance/SESSION-START-CONTEXT.md=6000

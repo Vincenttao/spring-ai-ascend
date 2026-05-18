@@ -79,6 +79,17 @@ public record RunPlanRef(
 No `PlanState` or `RunPlanRef` code ships at W0; first implementation binding at W4
 when the planner subsystem is scheduled.
 
+### PlanProjection staging note (2026-05-18 amendment per rc4 review P1-3)
+
+The v2.0.0-rc4 cross-constraint architecture review (`docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review.en.md` finding P1-3) called out that `docs/contracts/plan-projection.v1.yaml` and this ADR carry overlapping prose about when planner-related Java types ship, and a reader could not tell whether W2 or W4 owns first implementation. The two are NOT the same wave:
+
+- **W2 owns `PlanProjection` ONLY as a scheduler-admission contract.** The contract `docs/contracts/plan-projection.v1.yaml#deferred_runtime_binding` ships its Java record (`PlanProjection`), the `PlanProjector` SPI, and `SkillResourceMatrix.admit(PlanProjection) → AdmissionDecision` when the first non-in-memory scheduler ships. A stub planner that emits projections is sufficient — the W2 scheduler does not require the full dynamic planner toolset to admit a step.
+- **W4 still owns the full dynamic planner toolset.** `PlanState`, `RunPlanRef`, the planner DAG, and any code that decomposes a goal into steps ship at W4 per this ADR. The `RunScope` field addition to `Run` is also W4.
+
+A planned step's projection (a snapshot of required skills, budget envelope, memory scope, estimated duration) is what the W2 scheduler consumes; the planner that produced it can be a stub at W2 and become a real subsystem at W4 without breaking the projection contract. This separation is what `plan-projection.v1.yaml` is for.
+
+`PlanProjection` is therefore registered in `docs/governance/architecture-status.yaml#capabilities.plan_projection_contract` with `status: design_only`, `runtime_enforced: false`, and `promotion_trigger: "W2 — first non-in-memory scheduler ships"`.
+
 ### RunRepository.findRootRuns (shipped W0)
 
 ```java

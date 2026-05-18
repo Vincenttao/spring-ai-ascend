@@ -2,27 +2,29 @@
 level: L1
 view: logical
 module: agent-middleware
-status: skeleton-receiving-extraction
+status: extracted-spi
 freeze_id: null
 covers_views: [logical]
 spans_levels: [L1]
 authority: "ADR-0073 (Engine Hooks + Runtime Middleware SPI); Layer-0 principle P-M (Heterogeneous Engine Contract); Rule 45 (Runtime-Owned Middleware via Engine Hooks)"
 ---
 
-# agent-middleware — L1 architecture (skeleton, receiving extraction)
+# agent-middleware — L1 architecture (SPI extracted)
 
 > Owner: Middleware team | Wave: W2 | Maturity: SPI-only (consumer impls W2)
-> Created: 2026-05-17 (six-module materialization PR — code extraction in T2.B1)
+> Created: 2026-05-17 (six-module materialization PR); SPI extraction T2.B1 landed 2026-05-17.
 
 ## Status
 
-**Module receives the cross-cutting middleware SPI** during the same
-materialization PR. The five SPI types
+**Cross-cutting middleware SPI extracted per ADR-0073.** The five SPI types
 (`HookPoint`, `RuntimeMiddleware`, `HookContext`, `HookOutcome`,
-`HookDispatcher`) move out of `agent-runtime/orchestration/spi/` and
-`agent-runtime/engine/` into this module. The W2 Telemetry Vertical
-populates the consumer impls (TokenCounterHook, PiiRedactionHook,
-CostAttributionHook, LlmSpanEmitterHook).
+`HookDispatcher`) live under `agent-middleware/src/main/java/ascend/springai/middleware/`
+(SPI in the `.spi` sub-package; `HookDispatcher` at the package root as the
+runtime dispatcher implementation).
+
+The W2 Telemetry Vertical populates the consumer impls (TokenCounterHook,
+PiiRedactionHook, CostAttributionHook, LlmSpanEmitterHook) — those land alongside
+the W2 observability work, not in this module today.
 
 ## 0.4 Layered 4+1 view map (W1 — ADR-0068)
 

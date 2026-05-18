@@ -40,7 +40,7 @@ fi
 
 passed=0
 failed=0
-TOTAL=121
+TOTAL=129
 
 # PR-E4: parallel-aware ok()/fail().
 # Serial mode (TEST_RESULT_FILE unset): increment globals + print directly.
@@ -3230,6 +3230,256 @@ fi
 }
 
 # ===========================================================================
+# 2026-05-18 rc4 cross-constraint review response prevention wave -- Rules 80-83 self-tests
+# ===========================================================================
+
+test_rule80_s2c_callback_signal_historical_only_in_authority() {
+
+## Positive: file mentions S2cCallbackSignal with "historical" marker on same line -> Rule 80 PASS
+_r80_pos="$scratch/r80_pos"
+mkdir -p "$_r80_pos"
+cat > "$_r80_pos/sample.md" <<'DOCEOF'
+# Sample doc
+The historical S2cCallbackSignal type was deleted at rc3 and unified into
+SuspendSignal.forClientCallback per the 2026-05-18 amendment.
+DOCEOF
+_r80_pos_marker_re='historical|deleted|refactored|amendment|forClientCallback'
+_r80_pos_ok=1
+while IFS= read -r _r80_pos_match; do
+  [[ -z "$_r80_pos_match" ]] && continue
+  _r80_pos_lineno="${_r80_pos_match%%:*}"
+  _r80_pos_lo=$((_r80_pos_lineno > 5 ? _r80_pos_lineno - 5 : 1))
+  _r80_pos_hi=$((_r80_pos_lineno + 5))
+  if ! sed -n "${_r80_pos_lo},${_r80_pos_hi}p" "$_r80_pos/sample.md" | grep -qiE "$_r80_pos_marker_re"; then
+    _r80_pos_ok=0
+  fi
+done < <(grep -nF 'S2cCallbackSignal' "$_r80_pos/sample.md" 2>/dev/null)
+if [[ $_r80_pos_ok -eq 1 ]]; then
+  ok "rule80_s2c_historical_only_pos" "S2cCallbackSignal mention with historical marker correctly accepted"
+else
+  fail "rule80_s2c_historical_only_pos" "expected PASS but marker scan returned bad"
+fi
+
+## Negative: file mentions S2cCallbackSignal as current-state claim with no marker -> Rule 80 FAIL
+_r80_neg="$scratch/r80_neg"
+mkdir -p "$_r80_neg"
+cat > "$_r80_neg/sample.md" <<'DOCEOF'
+# Sample doc
+The runtime catches S2cCallbackSignal in its executeLoop and dispatches the
+envelope through the registered transport. Plain current-state prose only.
+DOCEOF
+_r80_neg_marker_re='historical|deleted|refactored|amendment|forClientCallback'
+_r80_neg_violation=0
+while IFS= read -r _r80_neg_match; do
+  [[ -z "$_r80_neg_match" ]] && continue
+  _r80_neg_lineno="${_r80_neg_match%%:*}"
+  _r80_neg_lo=$((_r80_neg_lineno > 5 ? _r80_neg_lineno - 5 : 1))
+  _r80_neg_hi=$((_r80_neg_lineno + 5))
+  if ! sed -n "${_r80_neg_lo},${_r80_neg_hi}p" "$_r80_neg/sample.md" | grep -qiE "$_r80_neg_marker_re"; then
+    _r80_neg_violation=1
+  fi
+done < <(grep -nF 'S2cCallbackSignal' "$_r80_neg/sample.md" 2>/dev/null)
+if [[ $_r80_neg_violation -eq 1 ]]; then
+  ok "rule80_s2c_historical_only_neg" "S2cCallbackSignal without historical marker correctly triggers FAIL"
+else
+  fail "rule80_s2c_historical_only_neg" "expected FAIL but marker scan found a marker"
+fi
+
+}
+
+test_rule81_skeleton_module_has_no_production_java() {
+
+## Positive: skeleton module contains only package-info.java -> Rule 81 PASS
+_r81_pos="$scratch/r81_pos"
+mkdir -p "$_r81_pos/agent-sample/src/main/java/ascend/sample"
+cat > "$_r81_pos/agent-sample/ARCHITECTURE.md" <<'DOCEOF'
+---
+status: skeleton
+---
+# agent-sample
+DOCEOF
+cat > "$_r81_pos/agent-sample/src/main/java/ascend/sample/package-info.java" <<'DOCEOF'
+package ascend.sample;
+DOCEOF
+_r81_pos_status=$(awk 'BEGIN{infm=0} /^---[[:space:]]*$/{infm=!infm; next} infm && /^status:/{print; exit}' "$_r81_pos/agent-sample/ARCHITECTURE.md")
+_r81_pos_violation=0
+if [[ "$_r81_pos_status" == *skeleton* ]]; then
+  while IFS= read -r _r81_pos_java; do
+    [[ -z "$_r81_pos_java" ]] && continue
+    [[ "$(basename "$_r81_pos_java")" == "package-info.java" ]] && continue
+    if ! head -n 30 "$_r81_pos_java" 2>/dev/null | grep -qE 'placeholder.*ADR-[0-9]{4}|ADR-[0-9]{4}.*placeholder'; then
+      _r81_pos_violation=1
+    fi
+  done < <(find "$_r81_pos/agent-sample/src/main/java" -name '*.java' -type f 2>/dev/null)
+fi
+if [[ $_r81_pos_violation -eq 0 ]]; then
+  ok "rule81_skeleton_no_prod_java_pos" "skeleton module with only package-info.java correctly accepted"
+else
+  fail "rule81_skeleton_no_prod_java_pos" "expected PASS but violation flagged"
+fi
+
+## Negative: skeleton module contains production code -> Rule 81 FAIL
+_r81_neg="$scratch/r81_neg"
+mkdir -p "$_r81_neg/agent-sample/src/main/java/ascend/sample"
+cat > "$_r81_neg/agent-sample/ARCHITECTURE.md" <<'DOCEOF'
+---
+status: skeleton
+---
+# agent-sample
+DOCEOF
+cat > "$_r81_neg/agent-sample/src/main/java/ascend/sample/RealCode.java" <<'DOCEOF'
+package ascend.sample;
+public class RealCode {
+  public int doStuff() { return 42; }
+}
+DOCEOF
+_r81_neg_status=$(awk 'BEGIN{infm=0} /^---[[:space:]]*$/{infm=!infm; next} infm && /^status:/{print; exit}' "$_r81_neg/agent-sample/ARCHITECTURE.md")
+_r81_neg_violation=0
+if [[ "$_r81_neg_status" == *skeleton* ]]; then
+  while IFS= read -r _r81_neg_java; do
+    [[ -z "$_r81_neg_java" ]] && continue
+    [[ "$(basename "$_r81_neg_java")" == "package-info.java" ]] && continue
+    if ! head -n 30 "$_r81_neg_java" 2>/dev/null | grep -qE 'placeholder.*ADR-[0-9]{4}|ADR-[0-9]{4}.*placeholder'; then
+      _r81_neg_violation=1
+    fi
+  done < <(find "$_r81_neg/agent-sample/src/main/java" -name '*.java' -type f 2>/dev/null)
+fi
+if [[ $_r81_neg_violation -eq 1 ]]; then
+  ok "rule81_skeleton_no_prod_java_neg" "skeleton module with production code correctly triggers FAIL"
+else
+  fail "rule81_skeleton_no_prod_java_neg" "expected FAIL but violation not flagged"
+fi
+
+}
+
+test_rule82_baseline_metrics_single_source() {
+
+## Positive: yaml has all required baseline_metrics keys AND README/gate-README point to it -> Rule 82 PASS
+_r82_pos="$scratch/r82_pos"
+mkdir -p "$_r82_pos/docs/governance" "$_r82_pos/gate"
+cat > "$_r82_pos/docs/governance/architecture-status.yaml" <<'DOCEOF'
+architecture_sync_gate:
+  baseline_metrics:
+    active_engineering_rules: 35
+    active_gate_checks: 68
+    gate_executable_test_cases: 129
+    enforcer_rows: 98
+    architecture_graph_nodes: 315
+    architecture_graph_edges: 433
+DOCEOF
+cat > "$_r82_pos/README.md" <<'DOCEOF'
+See docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics for current counts.
+DOCEOF
+cat > "$_r82_pos/gate/README.md" <<'DOCEOF'
+Canonical numbers live in architecture_sync_gate.baseline_metrics.
+DOCEOF
+_r82_pos_violation=0
+for _r82_pos_key in active_engineering_rules active_gate_checks gate_executable_test_cases enforcer_rows architecture_graph_nodes architecture_graph_edges; do
+  if ! grep -qE "^[[:space:]]+${_r82_pos_key}:" "$_r82_pos/docs/governance/architecture-status.yaml"; then
+    _r82_pos_violation=1
+  fi
+done
+for _r82_pos_ptr in "$_r82_pos/README.md" "$_r82_pos/gate/README.md"; do
+  if ! grep -qF 'architecture_sync_gate.baseline_metrics' "$_r82_pos_ptr"; then
+    _r82_pos_violation=1
+  fi
+done
+if [[ $_r82_pos_violation -eq 0 ]]; then
+  ok "rule82_baseline_metrics_single_source_pos" "structured baseline_metrics + entrypoint pointers correctly accepted"
+else
+  fail "rule82_baseline_metrics_single_source_pos" "expected PASS but violation flagged"
+fi
+
+## Negative: yaml missing a key OR entrypoint missing pointer -> Rule 82 FAIL
+_r82_neg="$scratch/r82_neg"
+mkdir -p "$_r82_neg/docs/governance" "$_r82_neg/gate"
+cat > "$_r82_neg/docs/governance/architecture-status.yaml" <<'DOCEOF'
+architecture_sync_gate:
+  baseline_metrics:
+    active_engineering_rules: 35
+    # MISSING active_gate_checks, gate_executable_test_cases, enforcer_rows, nodes, edges
+DOCEOF
+cat > "$_r82_neg/README.md" <<'DOCEOF'
+README without the magic pointer string.
+DOCEOF
+_r82_neg_violation=0
+for _r82_neg_key in active_engineering_rules active_gate_checks gate_executable_test_cases enforcer_rows architecture_graph_nodes architecture_graph_edges; do
+  if ! grep -qE "^[[:space:]]+${_r82_neg_key}:" "$_r82_neg/docs/governance/architecture-status.yaml"; then
+    _r82_neg_violation=1
+  fi
+done
+if [[ $_r82_neg_violation -eq 1 ]]; then
+  ok "rule82_baseline_metrics_single_source_neg" "missing baseline_metrics keys correctly triggers FAIL"
+else
+  fail "rule82_baseline_metrics_single_source_neg" "expected FAIL but all keys present"
+fi
+
+}
+
+test_rule83_design_only_contract_registered_in_catalog() {
+
+## Positive: design-only contract listed in catalog + cites existing ADR -> Rule 83 PASS
+_r83_pos="$scratch/r83_pos"
+mkdir -p "$_r83_pos/docs/contracts" "$_r83_pos/docs/adr"
+cat > "$_r83_pos/docs/contracts/sample.v1.yaml" <<'DOCEOF'
+status: design_only
+authority: "ADR-0032 (test)"
+DOCEOF
+cat > "$_r83_pos/docs/contracts/contract-catalog.md" <<'DOCEOF'
+| `sample.v1.yaml` | design_only | ADR-0032 |
+DOCEOF
+cat > "$_r83_pos/docs/adr/0032-test.yaml" <<'DOCEOF'
+id: ADR-0032
+DOCEOF
+_r83_pos_violation=0
+_r83_pos_status=$(grep -E '^status:' "$_r83_pos/docs/contracts/sample.v1.yaml" | head -1)
+_r83_pos_runtime=$(grep -E '^runtime_enforced:' "$_r83_pos/docs/contracts/sample.v1.yaml" 2>/dev/null | head -1 || true)
+if [[ "$_r83_pos_status" == *design_only* ]] || [[ "$_r83_pos_runtime" == *false* ]]; then
+  if ! grep -qF "sample.v1.yaml" "$_r83_pos/docs/contracts/contract-catalog.md"; then
+    _r83_pos_violation=1
+  fi
+  _r83_pos_adr_ok=0
+  while IFS= read -r _r83_pos_adr; do
+    [[ -z "$_r83_pos_adr" ]] && continue
+    _r83_pos_num="${_r83_pos_adr#ADR-}"
+    if compgen -G "$_r83_pos/docs/adr/${_r83_pos_num}-*.yaml" > /dev/null; then
+      _r83_pos_adr_ok=1
+    fi
+  done < <(grep -oE 'ADR-[0-9]{4}' "$_r83_pos/docs/contracts/sample.v1.yaml" | sort -u)
+  [[ $_r83_pos_adr_ok -eq 0 ]] && _r83_pos_violation=1
+fi
+if [[ $_r83_pos_violation -eq 0 ]]; then
+  ok "rule83_design_only_registered_pos" "design-only contract listed in catalog + cites existing ADR correctly accepted"
+else
+  fail "rule83_design_only_registered_pos" "expected PASS but violation flagged"
+fi
+
+## Negative: design-only contract NOT in catalog -> Rule 83 FAIL
+_r83_neg="$scratch/r83_neg"
+mkdir -p "$_r83_neg/docs/contracts" "$_r83_neg/docs/adr"
+cat > "$_r83_neg/docs/contracts/orphan.v1.yaml" <<'DOCEOF'
+status: design_only
+authority: "ADR-9999 (does not exist)"
+DOCEOF
+cat > "$_r83_neg/docs/contracts/contract-catalog.md" <<'DOCEOF'
+| `other.v1.yaml` | design_only | ADR-0032 |
+DOCEOF
+_r83_neg_violation=0
+_r83_neg_status=$(grep -E '^status:' "$_r83_neg/docs/contracts/orphan.v1.yaml" | head -1)
+if [[ "$_r83_neg_status" == *design_only* ]]; then
+  if ! grep -qF "orphan.v1.yaml" "$_r83_neg/docs/contracts/contract-catalog.md"; then
+    _r83_neg_violation=1
+  fi
+fi
+if [[ $_r83_neg_violation -eq 1 ]]; then
+  ok "rule83_design_only_registered_neg" "design-only contract not in catalog correctly triggers FAIL"
+else
+  fail "rule83_design_only_registered_neg" "expected FAIL but contract found in catalog"
+fi
+
+}
+
+# ===========================================================================
 # 2026-05-17 gate-script efficiency wave PR-E2 -- NDJSON logging self-tests
 # Authority: PR-E2 plan + gate/lib/aggregate_summary.sh + gate/lib/prune_old_runs.sh
 # ===========================================================================
@@ -3406,7 +3656,7 @@ fi
 # to a per-batch file. After all batches complete, we sort + concatenate the
 # results for deterministic stdout, then count PASS/FAIL.
 # ---------------------------------------------------------------------------
-TOTAL=121
+TOTAL=129
 
 _pre4_all_tests=$(declare -F | awk '/^declare -f test_rule/{print $3}' | sort)
 _pre4_jobs="${GATE_PARALLELISM_JOBS:-8}"

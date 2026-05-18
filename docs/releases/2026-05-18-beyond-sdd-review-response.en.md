@@ -1,5 +1,7 @@
 # Beyond-SDD Review Response — Release Note (v2.0.0-rc4)
 
+> **Historical artifact frozen at SHA 8b12479** — this release note documents the state at v2.0.0-rc4 (2026-05-18). Subsequent state lives in `docs/releases/2026-05-18-l0-rc4-cross-constraint-response.en.md` (v2.0.0-rc5) which supersedes this note for current-baseline claims. rc4 is NOT retracted; this note is preserved as the canonical rc4 snapshot.
+
 **Date:** 2026-05-18
 **Driver review:** [docs/reviews/spring-ai-ascend-beyond-sdd-en.md](../reviews/spring-ai-ascend-beyond-sdd-en.md)
 **Response doctrine:** [docs/reviews/spring-ai-ascend-beyond-sdd-response.en.md](../reviews/spring-ai-ascend-beyond-sdd-response.en.md)

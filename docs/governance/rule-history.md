@@ -85,6 +85,17 @@ The following are gate-script rules in `gate/check_architecture_sync.sh` introdu
 
 ---
 
+## 2026-05-18 — Rules 80-83 added (rc4 cross-constraint review response prevention wave)
+
+- **Rule 80** `s2c_callback_signal_historical_only_in_authority` — closes rc4 review P0-1 (ADR-0074 + s2c-callback.v1.yaml + enforcers.yaml E82 still described deleted `S2cCallbackSignal` as current ship). Enforcer E113.
+- **Rule 81** `skeleton_module_has_no_production_java` — closes rc4 review P0-2 (agent-execution-engine claimed skeleton across README + ARCHITECTURE.md + pom.xml + architecture-status while ADR-0079 had extracted production code). Enforcer E114.
+- **Rule 82** `baseline_metrics_single_source` — closes rc4 review P1-1 (baseline counts contradicted across README + AGENTS.md + gate/README + architecture-status). New `baseline_metrics:` structured block added under `architecture_sync_gate:`. Enforcer E115.
+- **Rule 83** `design_only_contract_registered_in_catalog` — closes rc4 review P1-3 (plan-projection.v1.yaml unregistered, W2/W4 staging ambiguity). ADR-0032 amended with PlanProjection staging note. Enforcer E116.
+
+Authority documents: `docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review.en.md` (review) and `docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review-response.en.md` (response).
+
+---
+
 ## Retired-rule notes
 
 ### Rule 12 — Maturity L0–L4

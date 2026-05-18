@@ -1,6 +1,6 @@
 # spring-ai-ascend
 
-> Enterprise agent platform on Spring AI 2.0.0-M5 + Spring Boot 4.0.5 + Java 21 — as of v2.0.0-rc4 (2026-05-18 Beyond-SDD review response).
+> Enterprise agent platform on Spring AI 2.0.0-M5 + Spring Boot 4.0.5 + Java 21 — as of v2.0.0-rc5 (2026-05-18 rc4 cross-constraint review response on rc4).
 
 ## What is this?
 
@@ -10,9 +10,9 @@
 
 **L1 module-level architecture shipped.** W0 runtime kernel + L1 platform composition (JWT validation, tenant claim cross-check, durable idempotency, posture boot guard, W1 run HTTP API, high-cardinality metric scrub, Rule 28 Code-as-Contract governance) shipped; W2–W4 capabilities remain design contracts.
 
-- Latest release: [docs/releases/2026-05-18-beyond-sdd-review-response.en.md](docs/releases/2026-05-18-beyond-sdd-review-response.en.md) (v2.0.0-rc4; additive uplift on v2.0.0-rc3 — rc3 NOT retracted). Prior wave: [docs/releases/2026-05-14-L1-modular-russell-release.en.md](docs/releases/2026-05-14-L1-modular-russell-release.en.md).
+- Latest release: [docs/releases/2026-05-18-l0-rc4-cross-constraint-response.en.md](docs/releases/2026-05-18-l0-rc4-cross-constraint-response.en.md) (v2.0.0-rc5; additive uplift on v2.0.0-rc4 — rc4 NOT retracted). Prior wave: [docs/releases/2026-05-18-beyond-sdd-review-response.en.md](docs/releases/2026-05-18-beyond-sdd-review-response.en.md).
 - Per-capability shipped/deferred ledger: [docs/governance/architecture-status.yaml](docs/governance/architecture-status.yaml)
-- Architecture baseline (v2.0.0-rc4 — 2026-05-18 Beyond-SDD review response on rc3): 65 §4 constraints · 77 ADRs · 64 active gate rules (rc3 baseline 63 + 1 new Rule 79 `rule_79_runbook_present_and_cited`) · 94 self-tests (rc3 baseline 92 + 2 new Rule 79 cases) · 35 active engineering rules (rc3 baseline 34 + Rule 79 Evidence-First Debug Sequence) · 13 Layer-0 governing principles · 94 enforcer rows (rc3 baseline 93 + E112) · 306 Maven tests GREEN under `./mvnw verify` (147 agent-runtime surefire + 29 agent-platform surefire + 65 agent-platform failsafe, of which 34 are Docker-skipped + 1 graphmemory-starter; +4 vs rc2: 3 new trace-ID validator cases in S2cCallbackEnvelopeValidationTest + 1 new ArchUnit method in SpiPurityGeneralizedArchTest) (the post-release review surfaced that `./mvnw test` skipped the `*IT.java` enforcers; rc1 verification now uses `verify` per post-release response §4). Trajectory: L1 release Phase L per ADR-0060; Telemetry Vertical L1.x per ADR-0061/0062/0063; Layer-0 governing principles P-A..P-D per ADR-0064/0065/0066/0067; W1 Layered 4+1 + Architecture Graph + Phase M per ADR-0068, Rules 33–34, gate Rules 37–44; W1.x Phase 1 L0 ironclad rules P-E..P-L per ADR-0069, Rules 35–42, gate Rules 45–52, enforcers E55–E71; W1.x Phase 8+9 cursor flow + ResilienceContract runtime per ADR-0070, Rules 36.b/41.b activated, gate Rules 53/54, enforcers E72/E73; W2.x Engine Contract Structural Wave P-M per ADR-0071..0077, Rules 43–48, gate Rules 55–60, enforcers E74–E87; W2.x Phase 7 audit closure adds E88+E89 with sunset discipline (gate Rule 60 widening); v2.0.0-rc1 post-release hotfix adds Rule 28k (`javadoc_enforcer_citation_semantic_check`), 45.b deferred (HookOutcome Run-state consumption to W2 Telemetry Vertical), E90 (S2C FAILED transition IT), E91 (engine-envelope classpath fallback IT), and `plan-projection.v1.yaml` design-only contract; v2.0.0-rc2 second-pass review closure (F-α / F-β / F-γ category audit) adds gate Rules 61 (`legacy_powershell_gate_deprecated`), 62 (`contract_yaml_declares_status`), 63 (`release_note_retracted_tag_qualified`) with 6 new self-test cases (2 each), deprecates the PowerShell gate entrypoint (canonical-bash posture), narrows W2.x deferred-as-live overclaims in engine-envelope/engine-hooks/HookOutcome/SyncOrchestrator/skill-capacity prose, and adds sub-clause 28k.b (schema↔Java-shape parity ArchUnit deferred to W3).
+- Architecture baseline (v2.0.0-rc5 — 2026-05-18 rc4 cross-constraint review response): 65 §4 constraints · 79 ADRs · 68 active gate rules · 129 gate self-tests · 39 active engineering rules · 13 Layer-0 governing principles · 98 enforcer rows · 306 Maven tests GREEN · 323 architecture-graph nodes / 445 edges. Canonical structured baseline lives in [`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`](docs/governance/architecture-status.yaml) (single source of truth; enforced by gate Rule 82 introduced this wave). rc5 wave summary: (a) ADR-0074 + `s2c-callback.v1.yaml` + enforcers.yaml E82 amended so `S2cCallbackSignal` appears only in historical / rc3-unification / deletion paragraphs (P0-1 closure); (b) `agent-execution-engine` is described as the post-ADR-0079 end-state (engine SPI + EngineRegistry + EngineEnvelope extracted; reference adapters remain in `agent-service.runtime`) across README, root ARCHITECTURE, module ARCHITECTURE, pom.xml comments, and architecture-status — `skeleton_modules` count dropped 5 → 3 (P0-2 closure); (c) AGENTS.md + gate/README.md purged of stale numeric claims; structured `baseline_metrics:` block introduced; gate Rule 82 prevents recurrence (P1-1 closure); (d) `contract-catalog.md` regenerated post-Phase-C/ADR-0079, lists current modules, all 11 SPI interfaces, and the 5 YAML domain contracts (P1-2 closure); (e) ADR-0032 amended with the PlanProjection staging note disambiguating W2 (`PlanProjection` admission contract when first non-in-memory scheduler ships) from W4 (full dynamic planner toolset); new `plan_projection_contract` capability row added; gate Rule 83 keeps design-only contracts registered (P1-3 closure). 4 new prevention gate rules: 80 (`s2c_callback_signal_historical_only_in_authority`) · 81 (`skeleton_module_has_no_production_java`) · 82 (`baseline_metrics_single_source`) · 83 (`design_only_contract_registered_in_catalog`) — enforcers E113-E116.
 
 ## Quick start
 
@@ -24,20 +24,18 @@
 
 Posture is selected by the `APP_POSTURE` environment variable (`dev` / `research` / `prod`). `dev` is permissive (in-memory backends allowed, missing config emits WARN); `research` and `prod` fail-closed at startup if required config is missing.
 
-## Modules — six-module materialization (in transit)
+## Modules — six-team-facing-modules materialization (Phase C + engine extraction complete)
 
 The L0 architecture (CLAUDE.md P-A..P-M) declares **six team-facing modules**.
-The reactor currently ships 9 modules — the original 4 plus 5 new skeletons
-filed in the six-module materialization PR (2026-05-17). The Phase-C follow-up
-folds `agent-platform` + the runtime kernel into `agent-service`, returning the
-reactor to **6 substantive modules + BoM + graphmemory starter**.
+Phase C (ADR-0078, 2026-05-18) consolidated the prior `agent-platform` + `agent-runtime` into `agent-service`. Engine extraction T2.B2 (ADR-0079, 2026-05-18) introduced a shared `agent-runtime-core` module hosting `Run` / `RunContext` / `SuspendSignal` / `ExecutorDefinition` / S2C SPI types, and moved the engine SPI + `EngineRegistry` + `EngineEnvelope` into `agent-execution-engine` (resolving the prior back-dep cycle). The reactor now ships **9 Maven modules** (6 team-facing + agent-runtime-core shared kernel + BoM + graphmemory starter).
 
 | Module | Plane (P-I) | Owner team | Maturity today |
 |--------|-------------|-----------|----------------|
 | `agent-client` | Edge Access | AgentClient | skeleton (SDK; W3+ per ADR-0049) |
-| `agent-service` (planned) — today: `agent-platform` + `agent-runtime` | Compute & Control | AgentService | shipped; merge in Phase C |
-| `agent-middleware` | Compute & Control | Middleware | SPI extracted from agent-runtime (T2.B1, this PR) |
-| `agent-execution-engine` | Compute & Control | AgentExecutionEngine | skeleton; code-extraction deferred to T2.B2 follow-up PR |
+| `agent-service` | Compute & Control | AgentService | shipped — HTTP edge (`service.platform.*`) + cognitive runtime kernel (`service.runtime.*`) per Phase C (ADR-0078) |
+| `agent-runtime-core` | Compute & Control | AgentService | shipped — shared kernel types (Run, RunContext, SuspendSignal, ExecutorDefinition, S2C SPI) per ADR-0079 |
+| `agent-middleware` | Compute & Control | Middleware | shipped — RuntimeMiddleware SPI + HookDispatcher extracted from runtime per ADR-0073 |
+| `agent-execution-engine` | Compute & Control | AgentExecutionEngine | shipped — engine SPI (ExecutorAdapter, GraphExecutor, AgentLoopExecutor, EngineHookSurface) + EngineRegistry + EngineEnvelope extracted per ADR-0079; reference adapters remain in `agent-service.runtime` |
 | `agent-bus` | Bus & State Hub | AgentBus | skeleton (contracts only; W2 impl per ADR-0050) |
 | `agent-evolve` | Evolution | AgentEvolve | skeleton (Python ML pipeline; Java adapter deferred) |
 | `spring-ai-ascend-dependencies` | (build-time) | platform | shipped (BoM) |
@@ -107,8 +105,8 @@ Full matrix: [docs/cross-cutting/posture-model.md](docs/cross-cutting/posture-mo
 2. **[docs/governance/architecture-status.yaml](docs/governance/architecture-status.yaml)** — per-capability shipped/deferred ledger (the canonical machine-readable index; an earlier README incorrectly linked to a non-existent `docs/STATE.md`).
 3. **[ARCHITECTURE.md](ARCHITECTURE.md)** — system boundary, §4 constraints, SPI contracts, decision chains.
 4. **[docs/contracts/](docs/contracts/)** — HTTP API contracts, SPI semantic contracts, pinned OpenAPI snapshot, engine envelope, engine hooks, S2C callback.
-5. **[docs/adr/README.md](docs/adr/README.md)** — Architecture Decision Records (ADR-0001 … ADR-0077).
-6. **[CLAUDE.md](CLAUDE.md)** — Layer-0 governing principles (13: P-A..P-M) + Layer-1 engineering rules (34 active, 15 deferred + 19 sub-clauses with re-introduction triggers — see CLAUDE.md "Deferred Rules" line for the authoritative count). See also [docs/quickstart.md](docs/quickstart.md).
+5. **[docs/adr/README.md](docs/adr/README.md)** — Architecture Decision Records (ADR-0001 … ADR-0079).
+6. **[CLAUDE.md](CLAUDE.md)** — Layer-0 governing principles + Layer-1 engineering rules. Current rule + principle counts live in [`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`](docs/governance/architecture-status.yaml). See also [docs/quickstart.md](docs/quickstart.md).
 7. **[docs/CLAUDE-deferred.md](docs/CLAUDE-deferred.md)** — every staged rule + sub-clause with its explicit re-introduction trigger.
 8. **[docs/governance/SESSION-START-CONTEXT.md](docs/governance/SESSION-START-CONTEXT.md)** — machine-readable entrypoint context (graph traversal cues).
 9. **[docs/governance/principle-coverage.yaml](docs/governance/principle-coverage.yaml)** — Layer-0 principle ↔ Layer-1 rule traceability.
@@ -119,5 +117,5 @@ Full matrix: [docs/cross-cutting/posture-model.md](docs/cross-cutting/posture-mo
 
 - [docs/releases/](docs/releases/) — formal release notes.
 - [docs/governance/architecture-status.yaml](docs/governance/architecture-status.yaml) — capability ledger.
-- [gate/README.md](gate/README.md) — architecture-sync gate (64 rules + 94 self-tests; 2026-05-18 Beyond-SDD review response adds Rule 79 + 2 new gate self-test cases for it).
+- [gate/README.md](gate/README.md) — architecture-sync gate (current rule + self-test counts in [`docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`](docs/governance/architecture-status.yaml); 2026-05-18 rc4 cross-constraint review response added Rules 80–83 with 8 new gate self-test cases).
 - [docs/cross-cutting/oss-bill-of-materials.md](docs/cross-cutting/oss-bill-of-materials.md) — OSS dependency policy.

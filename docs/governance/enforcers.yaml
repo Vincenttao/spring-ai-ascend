@@ -719,7 +719,7 @@
   level: L1
   view: process
   artifact: agent-service/src/test/java/ascend/springai/service/runtime/s2c/S2cCallbackRoundTripIT.java#happy_path_outcome_ok_propagates_payload_to_resume
-  asserts: "SyncOrchestrator catches S2cCallbackSignal, dispatches via InMemoryS2cCallbackTransport, validates response (callback_id match, outcome enum), and resumes the parent run with the response payload. Four cases: happy-path OK, callback_id mismatch -> s2c_response_invalid, outcome=ERROR -> s2c_client_error, no transport -> s2c_transport_unavailable."
+  asserts: "SyncOrchestrator catches the checked SuspendSignal where isClientCallback() is true (the v2.0.0-rc3 unification of the historical S2cCallbackSignal — see ADR-0074 amendments block), dispatches via InMemoryS2cCallbackTransport, validates response (callback_id match, outcome enum), and resumes the parent run with the response payload. Four cases: happy-path OK, callback_id mismatch -> s2c_response_invalid, outcome=ERROR -> s2c_client_error, no transport -> s2c_transport_unavailable."
 
 - id: E83
   constraint_ref: "CLAUDE.md Rule 46; CLAUDE.md Rule 38 (No Thread.sleep); ADR-0074; P-H + P-M"
@@ -1013,3 +1013,41 @@
   view: process
   artifact: gate/check_architecture_sync.sh#rule_79_runbook_present_and_cited
   asserts: "docs/runbooks/debug-first-evidence.md exists with the canonical title 'Evidence-First Debug Sequence', AND docs/governance/rules/rule-79.md references the runbook path — catches both runbook deletion and card↔runbook link breakage."
+
+# ---------------------------------------------------------------------------
+# 2026-05-18 rc4 cross-constraint review response prevention wave — E113-E116
+# Authority: docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review.en.md
+#            + docs/reviews/2026-05-18-l0-rc4-cross-constraint-architecture-review-response.en.md
+# ---------------------------------------------------------------------------
+
+- id: E113
+  constraint_ref: "CLAUDE.md Rule 80 (s2c_callback_signal_historical_only_in_authority); rc4 review P0-1; ADR-0074 (2026-05-18 amendments)"
+  kind: gate-script
+  level: L1
+  view: logical
+  artifact: gate/check_architecture_sync.sh#s2c_callback_signal_historical_only_in_authority
+  asserts: "Across active accepted ADRs (docs/adr/*.yaml + docs/adr/*.md), CLAUDE.md, README.md, agent-*/ARCHITECTURE.md, and docs/contracts/*.v1.yaml, every occurrence of the literal token 'S2cCallbackSignal' MUST appear within ±5 lines (markdown paragraph or yaml comment/block-scalar window) of one of the historical markers 'historical', 'deleted', 'refactored from', 'rc3-unification', or 'amendments' (case-insensitive). Live current-state claims using the deleted Java type fail. Closes rc4 P0-1: ADR-0074 amendments block + s2c-callback.v1.yaml header + enforcers.yaml E82 description are the canonical historical references; new authority drift is rejected."
+
+- id: E114
+  constraint_ref: "CLAUDE.md Rule 81 (skeleton_module_has_no_production_java); rc4 review P0-2; ADR-0073; ADR-0079"
+  kind: gate-script
+  level: L1
+  view: development
+  artifact: gate/check_architecture_sync.sh#skeleton_module_has_no_production_java
+  asserts: "For every agent-*/ARCHITECTURE.md whose front-matter status: contains the token 'skeleton', the module's src/main/java/**/*.java tree contains only package-info.java files OR placeholder SPI stubs whose first 30 lines name both the 'placeholder' keyword (case-insensitive) AND an 'ADR-NNNN' waiver. Bidirectional: modules with extracted production code MUST NOT declare status: skeleton. Closes rc4 P0-2 (agent-execution-engine still claimed skeleton across README + ARCHITECTURE.md + pom.xml + architecture-status while ADR-0079 had extracted production code)."
+
+- id: E115
+  constraint_ref: "CLAUDE.md Rule 82 (baseline_metrics_single_source); rc4 review P1-1"
+  kind: gate-script
+  level: L1
+  view: logical
+  artifact: gate/check_architecture_sync.sh#baseline_metrics_single_source
+  asserts: "docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics MUST exist as a structured block declaring the six required keys 'active_engineering_rules', 'active_gate_checks', 'gate_executable_test_cases', 'enforcer_rows', 'architecture_graph_nodes', 'architecture_graph_edges'. README.md AND gate/README.md MUST each contain at least one occurrence of the substring 'architecture_sync_gate.baseline_metrics' so prose baseline claims acknowledge the canonical source. Closes rc4 P1-1: entrypoint counts have one source."
+
+- id: E116
+  constraint_ref: "CLAUDE.md Rule 83 (design_only_contract_registered_in_catalog); rc4 review P1-3; ADR-0032; ADR-0052"
+  kind: gate-script
+  level: L1
+  view: logical
+  artifact: gate/check_architecture_sync.sh#design_only_contract_registered_in_catalog
+  asserts: "For every docs/contracts/*.v1.yaml with 'status: design_only' OR 'runtime_enforced: false', (a) the file basename appears as a literal substring in docs/contracts/contract-catalog.md, AND (b) at least one ADR-NNNN reference cited in the yaml resolves to a real file under docs/adr/<NNNN>-*.yaml or docs/adr/<NNNN>-*.md. Every cited ADR must exist (dangling references fail). Closes rc4 P1-3 prevention: plan-projection.v1.yaml unregistered + W2/W4 staging ambiguity defect class."

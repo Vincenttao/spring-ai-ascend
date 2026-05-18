@@ -18,7 +18,7 @@ This file is intentionally a **thin operational wrapper** for Codex / autonomous
 | ADRs (decision corpus) | [`docs/adr/`](docs/adr/) (every active rule cites its authority ADR) |
 | Quickstart for new-agent onboarding | [`docs/quickstart.md`](docs/quickstart.md) |
 
-**Why this is a thin wrapper:** prior versions of AGENTS.md carried an "Eleven active rules" tagline that was authored when CLAUDE.md held an 11-rule subset. CLAUDE.md has since grown to 34 active engineering rules + 13 governing principles, while AGENTS.md was never regenerated. The v2.0.0-rc3 cross-constraint audit (P1-1 / β-6 / γ-1) flagged the resulting count drift across AGENTS / README / architecture-status as a defect family R-γ instance. The structural fix is to stop carrying rule counts in AGENTS.md entirely so the canonical source can evolve without dragging this file along.
+**Why this is a thin wrapper:** prior versions of AGENTS.md carried an "Eleven active rules" tagline that was authored when CLAUDE.md held an 11-rule subset. CLAUDE.md has since grown well beyond that subset (current rule + principle counts live in `docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics`), while AGENTS.md was never regenerated. The v2.0.0-rc3 cross-constraint audit (P1-1 / β-6 / γ-1) and the v2.0.0-rc4 follow-up review P1-1 both flagged count drift across AGENTS / README / architecture-status as a defect family. The structural fix — applied here — is to stop carrying any baseline counts in AGENTS.md so the canonical source can evolve without dragging this file along.
 
 ---
 

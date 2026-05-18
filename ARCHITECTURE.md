@@ -91,7 +91,7 @@ sub-package level (ArchUnit `RuntimeMustNotDependOnPlatformTest`).
 | `agent-client` | edge | AgentClient | skeleton (SDK; W3+ per ADR-0049) |
 | `agent-service` | compute_control | AgentService | shipped — HTTP edge (`service.platform.*`) + cognitive runtime kernel (`service.runtime.*`); post-Phase-C consolidation per ADR-0078 |
 | `agent-middleware` | compute_control | Middleware | SPI extracted from `agent-service.runtime` (T2.B1, 2026-05-17) |
-| `agent-execution-engine` | compute_control | AgentExecutionEngine | skeleton; code-extraction deferred to T2.B2 (back-dep on Run/RunContext blocks current move) |
+| `agent-execution-engine` | compute_control | AgentExecutionEngine | engine SPI + EngineRegistry/EngineEnvelope extracted per ADR-0079; reference adapters remain in agent-service.runtime |
 | `agent-bus` | bus_state | AgentBus | skeleton (contracts only; W2 impl per ADR-0050) |
 | `agent-evolve` | evolution | AgentEvolve | skeleton (Python ML; Java adapter deferred) |
 | `spring-ai-ascend-dependencies` | none | platform | shipped (BoM) |
@@ -128,9 +128,10 @@ spring-ai-ascend/
         HookOutcome.java                       # sealed: Proceed | ShortCircuit | Fail
         RuntimeMiddleware.java                 # @FunctionalInterface
 
-  agent-execution-engine/                      # NEW 2026-05-17: heterogeneous engine surface skeleton (compute_control plane; ADR-0072)
+  agent-execution-engine/                      # heterogeneous engine surface (compute_control plane; ADR-0072 / ADR-0079)
     pom.xml + module-metadata.yaml + ARCHITECTURE.md + docs/dfx/agent-execution-engine.yaml
-    src/main/java/ascend/springai/engine/spi/  # placeholder SPI — EngineRegistry/EngineEnvelope/ExecutorAdapter remain in agent-runtime/engine pending T2.B2
+    src/main/java/ascend/springai/engine/spi/  # ExecutorAdapter, GraphExecutor, AgentLoopExecutor, EngineHookSurface, EngineMatchingException (engine SPI extracted from agent-service per ADR-0079)
+    src/main/java/ascend/springai/service/runtime/engine/  # EngineRegistry, EngineEnvelope (engine implementation; package preserved per ADR-0079 §Consequences)
 
   agent-evolve/                                # NEW 2026-05-17: Java adapter skeleton for Python ML pipeline (evolution plane; ADR-0075)
     pom.xml + module-metadata.yaml + ARCHITECTURE.md + docs/dfx/agent-evolve.yaml

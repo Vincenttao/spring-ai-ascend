@@ -51,6 +51,7 @@ principles:
       - Rule-31
       - Rule-33   # NEW (ADR-0068)
       - Rule-34   # NEW (ADR-0068)
+      - Rule-81   # NEW (rc4 review P0-2 — skeleton-module identity)
 
   - id: P-D
     name: "SPI-Aligned, DFX-Explicit, Spec-Driven, TCK-Tested"
@@ -66,6 +67,8 @@ principles:
       - Rule-4
       - Rule-32
       - Rule-79
+      - Rule-82   # NEW (rc4 review P1-1 — baseline-metrics single source)
+      - Rule-83   # NEW (rc4 review P1-3 — design-only contract registration)
     deferred_operationalisers:
       - Rule-22   # PayloadCodec — deferred
 
@@ -187,6 +190,7 @@ principles:
       - Rule-45   # Runtime-Owned Middleware via Engine Hooks
       - Rule-46   # S2C Callback Envelope + Lifecycle Bound
       - Rule-47   # Evolution Scope Default Boundary
+      - Rule-80   # NEW (rc4 review P0-1 — S2cCallbackSignal historical-only in authority)
     cross_cutting_invariant:
       rule: Rule-48   # Schema-First Domain Contracts
       description: |

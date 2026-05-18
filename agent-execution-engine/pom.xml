@@ -2,9 +2,17 @@
 <!--
   agent-execution-engine — heterogeneous engine surface (per ADR-0072).
 
-  Status: skeleton. Code (EngineRegistry, EngineEnvelope, ExecutorAdapter,
-  ExecutorDefinition, GraphExecutor, AgentLoopExecutor) is extracted from
-  agent-runtime in T2.B2 of the same materialization PR.
+  Status (post-2026-05-18): Engine SPI + EngineRegistry + EngineEnvelope
+  extracted from agent-service per ADR-0079. Code lives under:
+    - ascend.springai.engine.spi.*  (ExecutorAdapter, GraphExecutor,
+                                     AgentLoopExecutor, EngineHookSurface,
+                                     EngineMatchingException)
+    - ascend.springai.service.runtime.engine.*  (EngineRegistry,
+                                                 EngineEnvelope)
+  Reference adapters (SequentialGraphExecutor, IterativeAgentLoopExecutor)
+  stay in agent-service.runtime because they wire Run/RunContext from the
+  runtime kernel. The back-dep cycle was resolved by introducing the
+  shared agent-runtime-core module (ADR-0079).
 
   Why this module exists separately: ADR-0072 / Rule 43 declare the engine
   contract as an independent surface (Graph / AgentLoop today, room for

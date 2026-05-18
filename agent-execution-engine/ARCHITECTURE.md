@@ -2,58 +2,30 @@
 level: L1
 view: logical
 module: agent-execution-engine
-status: skeleton-receiving-extraction
+status: extracted-spi-and-registry
 freeze_id: null
 covers_views: [logical]
 spans_levels: [L1]
 authority: "ADR-0072 (Engine Envelope + Strict Matching); Layer-0 principle P-M (Heterogeneous Engine Contract); Rule 43 (Engine Envelope Single Authority), Rule 44 (Strict Engine Matching)"
 ---
 
-# agent-execution-engine — L1 architecture (skeleton, receiving extraction)
+# agent-execution-engine — L1 architecture (SPI + registry + envelope extracted)
 
 > Owner: AgentExecutionEngine team | Wave: W2 | Maturity: SPI + 2 reference adapters
-> Created: 2026-05-17 (six-module materialization PR — code extraction in T2.B2)
+> Created: 2026-05-17 (six-module materialization PR); extraction landed 2026-05-18 (ADR-0079)
 
 ## Status
 
-**This module is a deliberately empty skeleton at v2.0.0-rc4 (this PR).**
-The engine code (EngineRegistry, EngineEnvelope, ExecutorAdapter,
-ExecutorDefinition, GraphExecutor, AgentLoopExecutor) stays in
-`agent-runtime/engine/` and `agent-runtime/orchestration/spi/` until the
-follow-up PR resolves a dependency-direction snag surfaced during the
-materialization PR:
+**Engine SPI + EngineRegistry + EngineEnvelope extracted per ADR-0079 (2026-05-18).**
 
-- `EngineRegistry` and the executor SPIs **reference** `Run`, `RunContext`,
-  and `SuspendSignal` from the runtime kernel (`agent-runtime/runs/`,
-  `agent-runtime/orchestration/spi/`).
-- A naive extraction would create a back-dep: `agent-execution-engine` →
-  `agent-runtime` → `agent-execution-engine` (cycle).
-- The follow-up PR decides between two clean approaches: (a) move
-  `Run` / `RunContext` / `SuspendSignal` into a shared `agent-runtime-core`
-  module that both sides depend on, or (b) make the engine SPI carry only
-  primitives (runId, tenantId, payload) and re-hydrate Run state inside
-  the runtime side, mirroring the `HookContext` solution used for
-  middleware extraction.
+Code now lives under this module:
 
-The skeleton + metadata + dependency declarations ship today so the
-AgentExecutionEngine team has a stable workspace. The physical move lands
-in the follow-up PR.
+- `agent-execution-engine/src/main/java/ascend/springai/engine/spi/` — `ExecutorAdapter`, `GraphExecutor`, `AgentLoopExecutor`, `EngineHookSurface`, `EngineMatchingException` (engine contract surface; package root `ascend.springai.engine.spi.*` to keep SPI purity per Rule 77 / OrchestrationSpiArchTest).
+- `agent-execution-engine/src/main/java/ascend/springai/service/runtime/engine/` — `EngineRegistry`, `EngineEnvelope` (engine implementation; package preserved at `ascend.springai.service.runtime.engine.*` for backwards source compatibility per ADR-0079 §Consequences).
 
-### Planned end-state (when the follow-up PR lands)
+The back-dep cycle that previously blocked extraction (engine → service → engine) was resolved by creating a shared `agent-runtime-core` module that hosts `Run` / `RunContext` / `SuspendSignal` / `ExecutorDefinition` / S2C SPI types. Both `agent-service` and `agent-execution-engine` depend on `agent-runtime-core`; the build graph is now a strict DAG.
 
-| Moves from | Moves to |
-|---|---|
-| `agent-runtime/.../engine/EngineRegistry.java` | `agent-execution-engine/.../engine/EngineRegistry.java` |
-| `agent-runtime/.../engine/EngineEnvelope.java` | `agent-execution-engine/.../engine/EngineEnvelope.java` |
-| `agent-runtime/.../orchestration/spi/ExecutorAdapter.java` | `agent-execution-engine/.../engine/spi/ExecutorAdapter.java` |
-| `agent-runtime/.../orchestration/spi/ExecutorDefinition.java` | `agent-execution-engine/.../engine/spi/ExecutorDefinition.java` |
-| `agent-runtime/.../orchestration/spi/GraphExecutor.java` | `agent-execution-engine/.../engine/spi/GraphExecutor.java` |
-| `agent-runtime/.../orchestration/spi/AgentLoopExecutor.java` | `agent-execution-engine/.../engine/spi/AgentLoopExecutor.java` |
-
-Reference adapters (`SequentialGraphExecutor`, `IterativeAgentLoopExecutor`)
-stay in `agent-runtime/.../orchestration/inmemory/` because they wire
-Run/RunContext from the runtime kernel — they implement the engine SPI but
-are not part of the engine contract surface.
+**Reference adapters stay in `agent-service.runtime`.** `SequentialGraphExecutor` and `IterativeAgentLoopExecutor` implement the engine SPI but wire `Run` / `RunContext` from the runtime kernel and therefore live on the runtime side, not in this module. The engine contract surface (SPI + registry + envelope) is the team-facing artefact this module owns; reference implementations are intentionally where the kernel state is.
 
 ## 0.4 Layered 4+1 view map
 
