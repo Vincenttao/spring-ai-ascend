@@ -3189,19 +3189,19 @@ _r69_cards_dir='docs/governance/rules'
 if [[ ! -d "$_r69_cards_dir" ]]; then
   pass_rule "every_active_rule_has_card"
 else
-  # Extract active rule numbers from CLAUDE.md.
-  _r69_active=$(grep -oE '^#### Rule [0-9]+' "$_r69_claude" 2>/dev/null | grep -oE '[0-9]+' | sort -un)
-  # Extract card numbers from filenames.
-  _r69_cards=$(find "$_r69_cards_dir" -maxdepth 1 -name 'rule-*.md' -type f 2>/dev/null \
-                 | sed -E 's|.*/rule-0*([0-9]+)[a-z]?\.md|\1|' | sort -un)
-  # Missing cards: active rule with no card.
-  _r69_missing=""
-  while IFS= read -r _n; do
-    [[ -z "$_n" ]] && continue
-    if ! echo "$_r69_cards" | grep -qxF "$_n"; then
-      _r69_missing+="$_n "
-    fi
-  done <<< "$_r69_active"
+  # rc9 hardening: use temp files instead of multi-line shell variables to avoid
+  # SIGPIPE races under the parallel orchestrator (`xargs -P8` + nested subshells +
+  # in-loop `echo "$var" | grep -qxF` can truncate the producer's output, producing
+  # flaky false-positive "active rules with no card: NN" / "orphan cards: NN"
+  # failures on Linux CI even when local WSL passes consistently).
+  _r69_active_f=$(mktemp 2>/dev/null || echo "/tmp/r69_active.$$")
+  _r69_cards_f=$(mktemp 2>/dev/null || echo "/tmp/r69_cards.$$")
+  grep -oE '^#### Rule [0-9]+' "$_r69_claude" 2>/dev/null \
+    | grep -oE '[0-9]+' | sort -un > "$_r69_active_f"
+  find "$_r69_cards_dir" -maxdepth 1 -name 'rule-*.md' -type f 2>/dev/null \
+    | sed -E 's|.*/rule-0*([0-9]+)[a-z]?\.md|\1|' | sort -un > "$_r69_cards_f"
+  # Missing cards: active - cards (set difference via comm).
+  _r69_missing=$(comm -23 "$_r69_active_f" "$_r69_cards_f" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
   if [[ -n "$_r69_missing" ]]; then
     fail_rule "every_active_rule_has_card" "active rules with no card: $_r69_missing"
     _r69_fail=1
@@ -3210,15 +3210,15 @@ else
   _r69_orphans=""
   while IFS= read -r _n; do
     [[ -z "$_n" ]] && continue
-    if echo "$_r69_active" | grep -qxF "$_n"; then
+    if grep -qxF "$_n" "$_r69_active_f"; then
       continue
     fi
-    # Check deferred file mentions "Rule NN" (allow optional sub-clause suffix like 29.c).
     if [[ -f "$_r69_deferred" ]] && grep -qE "Rule[[:space:]]+${_n}([.][a-z])?\b" "$_r69_deferred"; then
       continue
     fi
     _r69_orphans+="$_n "
-  done <<< "$_r69_cards"
+  done < "$_r69_cards_f"
+  rm -f "$_r69_active_f" "$_r69_cards_f"
   if [[ -n "$_r69_orphans" ]]; then
     fail_rule "every_active_rule_has_card" "orphan cards (no active or deferred reference): $_r69_orphans"
     _r69_fail=1

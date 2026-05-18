@@ -207,9 +207,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <!-- Boot 4 + springdoc 3.0.3 SpringDocJacksonKotlinModuleConfiguration eagerly
+           wires springdocKotlinObjectMapperProvider which transitively requires
+           YAMLFactory at boot. Without this jar on the runtime classpath the boot
+           jar fails with `NoClassDefFoundError: com.fasterxml.jackson.dataformat.yaml.YAMLFactory`
+           on first context refresh (observed in CI quickstart-smoke job, rc9). -->
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
