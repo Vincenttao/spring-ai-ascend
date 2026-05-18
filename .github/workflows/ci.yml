@@ -69,6 +69,23 @@ jobs:
     name: Quickstart smoke (/v1/health)
     runs-on: ubuntu-latest
     needs: build
+    services:
+      # rc9 fix: agent-service boot wires Flyway against postgres at localhost:5432.
+      # Without this service container the smoke job failed with
+      # `Connection to localhost:5432 refused` on every CI run since rc1.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: springaiascend
+          POSTGRES_USER: springaiascend
+          POSTGRES_PASSWORD: springaiascend
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U springaiascend"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -80,10 +97,14 @@ jobs:
       - name: Package agent-service
         run: ./mvnw -pl agent-service -am -B -ntp --strict-checksums package -DskipTests
       - name: Boot agent-service + poll /v1/health
+        env:
+          SPRING_PROFILES_ACTIVE: dev
+          APP_POSTURE: dev
+          DB_URL: jdbc:postgresql://localhost:5432/springaiascend
+          DB_USER: springaiascend
+          DB_PASS: springaiascend
         run: |
           set -e
-          export SPRING_PROFILES_ACTIVE=dev
-          export APP_POSTURE=dev
           java -jar agent-service/target/agent-service-0.1.0-SNAPSHOT-boot.jar &
           BOOT_PID=$!
           trap "kill $BOOT_PID 2>/dev/null || true" EXIT
