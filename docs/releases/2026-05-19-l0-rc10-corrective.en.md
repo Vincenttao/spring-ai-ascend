@@ -2,9 +2,13 @@
 level: L0
 view: process
 release_id: v2.0.0-rc10
-tag: v2.0.0-rc10
+tag: v2.0.0-rc10 (retracted)
 date: 2026-05-19
-status: published
+status: retracted
+retracted: true
+retracted_by_tag: v2.0.0-rc11
+retracted_date: 2026-05-19
+retracted_reason: "rc10 post-corrective architecture review response P1-1 (Rule 41 kernel overclaim) / P1-2 (deleted-module-name leaks in operational runbooks) / P1-3 (Rule 96 kernel-vs-impl drift) / P2-1 (shadow-corpus prose drift) + user-elected Rule 94 kernel/impl widening — see ADR-0085 and docs/releases/2026-05-19-l0-rc11-corrective.en.md"
 supersedes_tag: v2.0.0-rc9
 authority_refs:
   - ADR-0084
@@ -12,7 +16,19 @@ authority_refs:
   - "docs/reviews/2026-05-19-l0-rc8-post-corrective-architecture-review-response.en.md (rc10 appendix appended)"
 ---
 
-# v2.0.0-rc10 — Corpus Truth + Prevention Widening (rc8 Category-Sweep Follow-Up)
+# v2.0.0-rc10 (retracted) — Corpus Truth + Prevention Widening (rc8 Category-Sweep Follow-Up)
+
+> **This release is RETRACTED** as of 2026-05-19 by the v2.0.0-rc11 wave per ADR-0085 (rc10 post-corrective architecture review response).
+> The findings against rc10 (Codex review, 2026-05-19):
+>
+> - P1-1: Rule 41 kernel still overclaims end-to-end runtime suspension (shipped code returns a decision envelope, not a `Run` state transition).
+> - P1-2: Deleted-module-name leaks remained in active operational Markdown runbooks (`ops/runbooks/*.md` + `ops/compose/sidecar-mem0.yml`) outside Rule 98's scope.
+> - P1-3: Rule 96's kernel and implementation disagreed on whether the kernel block alone or EITHER the kernel block OR the rule card must cite a deferred sub-clause.
+> - P2-1: `gate/rules/` file-count prose ("110 files total") didn't match the actual file count (108 files, keyed by unique rule id).
+>
+> rc11 closes all four findings + applies user-elected Rule 94 kernel/impl widening. See [docs/releases/2026-05-19-l0-rc11-corrective.en.md](2026-05-19-l0-rc11-corrective.en.md) (retracted) for the corrective wave and [docs/reviews/2026-05-19-l0-rc10-post-corrective-architecture-review-response.en.md](../reviews/2026-05-19-l0-rc10-post-corrective-architecture-review-response.en.md) for the per-finding closure.
+>
+> Historical content preserved below.
 
 ## TL;DR
 
