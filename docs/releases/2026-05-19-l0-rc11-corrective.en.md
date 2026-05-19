@@ -18,7 +18,7 @@ authority_refs:
 
 The rc10 post-corrective architecture review (Codex, 2026-05-19) found 4 contract/prevention-rule precision defects in the rc10 wave: Rule 41 kernel overclaimed shipped runtime behaviour (P1-1), deleted-module-name leaks remained in operational Markdown runbooks (P1-2), Rule 96's kernel and implementation disagreed on the "either surface" policy (P1-3), and `gate/rules/` shadow-corpus prose was imprecise (P2-1). The reviewer also noted a secondary kernel-vs-impl drift in Rule 94 itself.
 
-rc11 closes all four cited findings using the categorize→sweep→batch-fix→prevention methodology rc10 introduced. Per user election, this wave ALSO (a) fully retracts the v2.0.0-rc10 tag, and (b) widens Rule 94's implementation to match its kernel.
+rc11 closes all four cited findings using the categorize→sweep→batch-fix→prevention methodology rc10 introduced. Per user election, this wave ALSO (a) fully retracts the v2.0.0-rc10 (retracted) tag, and (b) widens Rule 94's implementation to match its kernel.
 
 The wave is **docs/yaml/gate-script only** — no production Java/Spring code changed. Maven test count unchanged at 371 GREEN.
 
@@ -112,7 +112,7 @@ The wave is **docs/yaml/gate-script only** — no production Java/Spring code ch
 **Closure**:
 - `gate/README.md` line 51 rewritten: *"Canonical L0 release gate — 112 active executable sections / 110 unique rule ids (Rule 11 and Rule 28 each appear twice with sub-checks; rc11 reconciliation, ADR-0085)"*.
 - `docs/governance/rules/rule-92.md` + CLAUDE.md Rule 92 kernel clarified: *"Files are keyed by unique rule id; a rule with multiple gate sections sharing the same id maps to a single file. The active_gate_checks baseline counts executable sections; `gate/rules/` file count is unique-rule-id count."*.
-- `docs/governance/retracted-tags.txt` — `v2.0.0-rc10` entry added.
+- `docs/governance/retracted-tags.txt` — `v2.0.0-rc10` (retracted) entry added.
 - `docs/releases/2026-05-19-l0-rc10-corrective.en.md` — title `(retracted)` qualifier + frontmatter `retracted: true` + `retracted_by_tag: v2.0.0-rc11` + `retracted_reason:` + retraction banner above historical content.
 - `docs/governance/architecture-status.yaml` `allowed_claim:` rewritten with rc11 wave summary + rc10-retracted attribution.
 
@@ -135,7 +135,7 @@ Each deferred entry carries an explicit re-introduction trigger per Rule 28 (Cod
 - `docs/CLAUDE-deferred.md` — Rule 41.c sub-clause added.
 - `docs/governance/enforcers.yaml` — E133/E134 `asserts:` updated; E139-E142 appended.
 - `docs/governance/architecture-status.yaml` — `baseline_metrics` refreshed; `allowed_claim:` rewritten.
-- `docs/governance/retracted-tags.txt` — `v2.0.0-rc10` entry added.
+- `docs/governance/retracted-tags.txt` — `v2.0.0-rc10` (retracted) entry added.
 
 ### Hidden-defect fix-pass (Track B sweep)
 
@@ -186,21 +186,27 @@ python gate/build_architecture_graph.py         # idempotent: 384 nodes, 551 edg
 
 ## Counts after rc11
 
+| Metric | rc11 value | Delta from rc10 |
+|---|---|---|
+| §4 constraints | 65 | unchanged |
+| Active ADRs | 85 | +1 (ADR-0085) |
+| Active gate rules | 112 | +2 (Rules 99-100) |
+| Gate self-test cases | 172 | +7 (2 per Rule 99/100 + 2 for Rule 98 widening + 1 for Rule 96 card-only) |
+| Active engineering rules | 67 | rc11 reconciliation (pre-rc11 ledger off by 12) |
+| Enforcer rows | 142 | +4 (E139-E142) |
+| Architecture-graph nodes | 384 | +8 |
+| Architecture-graph edges | 551 | +16 |
+| Layer-0 governing principles | 13 | unchanged (P-A..P-M) |
+| Maven tests GREEN | 371 | unchanged (no production code changed) |
+
 - 67 active engineering rules (rc11 reconciliation — counts every `#### Rule N` head in CLAUDE.md; pre-rc11 ledger carried 53 which was an off-by-12 historical miscount).
-- 112 active gate rules / executable sections.
-- 110 unique rule ids in `gate/rules/`.
-- 172 self-tests (rc10 baseline 165 + 7 new).
-- 142 enforcer rows (rc10 baseline 138 + E139-E142).
-- 85 ADRs (rc10 baseline 84 + ADR-0085).
-- 384 architecture-graph nodes / 551 edges (rc10 baseline 376 / 535 + rc11 deltas).
-- 13 Layer-0 governing principles (unchanged).
-- 371 Maven tests GREEN (unchanged).
+- 110 unique rule ids in `gate/rules/` (112 sections / 110 unique-id files; Rule 11 + Rule 28 each appear twice with sub-checks per Rule 92 clarification).
 
 ## Tag history
 
 - v2.0.0-rc11 (this release) — supersedes rc10 (retracted) per ADR-0085.
-- v2.0.0-rc10 — **retracted** by ADR-0085 (rc10 post-corrective review findings P1-1/P1-2/P1-3/P2-1 + user-elected Rule 94 widening).
+- v2.0.0-rc10 (retracted) — **retracted** by ADR-0085 (rc10 post-corrective review findings P1-1/P1-2/P1-3/P2-1 + user-elected Rule 94 widening).
 - v2.0.0-rc9 — historical (CI-green restoration; ADR-0083).
-- v2.0.0-w2x-final — retracted by rc1 post-release fix (historical).
+- v2.0.0-w2x-final (retracted) — retracted by rc1 post-release fix (historical).
 
 `frozen_at_sha: <rc11-sha>` is set at tag time so future Rule 97 numeric-truth checks treat this document as the rc11 baseline.

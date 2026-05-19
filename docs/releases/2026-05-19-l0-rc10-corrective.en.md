@@ -1,7 +1,7 @@
 ---
 level: L0
 view: process
-release_id: v2.0.0-rc10
+release_id: v2.0.0-rc10 (retracted)
 tag: v2.0.0-rc10 (retracted)
 date: 2026-05-19
 status: retracted
@@ -9,6 +9,7 @@ retracted: true
 retracted_by_tag: v2.0.0-rc11
 retracted_date: 2026-05-19
 retracted_reason: "rc10 post-corrective architecture review response P1-1 (Rule 41 kernel overclaim) / P1-2 (deleted-module-name leaks in operational runbooks) / P1-3 (Rule 96 kernel-vs-impl drift) / P2-1 (shadow-corpus prose drift) + user-elected Rule 94 kernel/impl widening — see ADR-0085 and docs/releases/2026-05-19-l0-rc11-corrective.en.md"
+historical_baseline_note: "Historical artifact frozen at SHA 94ac17b (rc10 wave commit). Counts in this document (110 active gate rules / 165 self-tests / 138 enforcer rows / 84 ADRs / 53 active engineering rules / 376 graph nodes / 535 edges) reflect the state at rc10 publication time and are NOT retroactively updated — see canonical baseline in docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics for rc11 values."
 supersedes_tag: v2.0.0-rc9
 authority_refs:
   - ADR-0084
@@ -18,7 +19,9 @@ authority_refs:
 
 # v2.0.0-rc10 (retracted) — Corpus Truth + Prevention Widening (rc8 Category-Sweep Follow-Up)
 
-> **This release is RETRACTED** as of 2026-05-19 by the v2.0.0-rc11 wave per ADR-0085 (rc10 post-corrective architecture review response).
+> **Historical artifact frozen at SHA 94ac17b (rc10 wave commit).** This release is **RETRACTED** as of 2026-05-19 by the v2.0.0-rc11 wave per ADR-0085. Baseline counts in this document (110 active gate rules / 165 self-tests / 138 enforcer rows / 84 ADRs / 53 active engineering rules / 376 graph nodes / 535 edges) reflect the state at rc10 publication time and are NOT retroactively updated. Current canonical baseline lives in `docs/governance/architecture-status.yaml#architecture_sync_gate.baseline_metrics` and in `docs/releases/2026-05-19-l0-rc11-corrective.en.md`.
+
+> **rc10 post-corrective architecture review response (rc11 supersession context).**
 > The findings against rc10 (Codex review, 2026-05-19):
 >
 > - P1-1: Rule 41 kernel still overclaims end-to-end runtime suspension (shipped code returns a decision envelope, not a `Run` state transition).
@@ -193,5 +196,5 @@ gh.exe run view <rc10-run-id>            # conclusion: success
   follow-up (this wave's authority record).
 - Response document (rc10 appendix appended):
   `docs/reviews/2026-05-19-l0-rc8-post-corrective-architecture-review-response.en.md`.
-- Tag rc10 supersedes rc9; rc9 NOT retracted (carries `superseded_by_tag: v2.0.0-rc10` + inline
+- Tag rc10 (retracted) supersedes rc9; rc9 NOT retracted (carries `superseded_by_tag: v2.0.0-rc10` (retracted) + inline
   `rc10 correction` markers on the two corrected lines).

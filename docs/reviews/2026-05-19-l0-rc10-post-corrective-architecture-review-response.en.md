@@ -1,6 +1,8 @@
 ---
 level: L0
 view: process
+affects_level: L0
+affects_view: process
 proposal_status: response
 authors: ["spring-ai-ascend architecture team"]
 responds_to:
