@@ -1423,3 +1423,10 @@
   view: scenarios
   artifact: gate/lib/check_legacy_paren.sh
   asserts: "Rule 113.a + .b helper extracted to gate/lib/check_legacy_paren.sh per rc20 Wave 1 / ADR-0097. Both the production gate (Rule 113 body) AND the test_rule_113_* fixtures source this helper, closing Pattern D recurrence on Rule 113 (fixture inlining production grep was the rc19 review finding). Helper exports _check_legacy_paren_no_reintroduction and _check_migration_doc_complete."
+- id: E163
+  constraint_ref: "Rule D-9 (no_version_log_metadata_in_code); ADR-0097"
+  kind: gate-script
+  level: L0
+  view: development
+  artifact: gate/check_architecture_sync.sh#no_version_log_metadata_in_code
+  asserts: "Rule D-9 / Rule 115 — production code files (*.java, *.py, *.sh, *.bash, *.kt, *.ts, *.tsx, application*.yml, Dockerfile, .github/workflows/*.yml) MUST NOT contain the regex `\\brc[0-9]+ Wave [0-9]+\\b|\\bper ADR-[0-9]{4}\\b|\\(F[0-9]+\\)|\\bFinding F[0-9]+\\b|\\b(closes|addresses) #[0-9]+\\b`. Exempt: docs/adr/, docs/logs/, docs/governance/rules/, docs/governance/rule-history.md, docs/governance/recurring-defect-families.{yaml,md}, docs/governance/architecture-status.yaml, CLAUDE.md, CHANGELOG.md, gate/lib/, gate/test_architecture_sync_gate.sh. Such metadata belongs in commit messages / ADRs / release notes / rule cards / rule-history.md — not in the implementation."
