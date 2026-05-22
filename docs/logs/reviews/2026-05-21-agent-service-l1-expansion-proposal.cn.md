@@ -1,9 +1,9 @@
 ---
 level: L1
-view: [logical, development, process, scenarios]
+view: [scenarios, logical, process, development, physical]
 module: agent-service
 affects_level: L0, L1
-affects_view: [logical, process, scenarios, development]
+affects_view: [scenarios, logical, process, development, physical]
 status: proposed
 ---
 
@@ -16,12 +16,14 @@ status: proposed
 
 ## 1. 背景与原则 (Background & Principles)
 
-## 2. 逻辑视图 (Logical View)
+## 2. 场景视图 (Scenarios View)
 
-## 3. 进程视图 (Process View)
+## 3. 逻辑视图 (Logical View)
 
-## 4. 开发视图 (Development View)
+## 4. 进程视图 (Process View)
 
-## 5. 场景视图 (Scenarios View)
+## 5. 开发视图 (Development View)
 
-## 6. 附录：核心 SPI 接口 (Appendix: Core SPI Interfaces)
+## 6. 物理视图 (Physical View)
+
+## 7. 附录：核心 SPI 接口 (Appendix: Core SPI Interfaces)
