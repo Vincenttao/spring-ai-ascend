@@ -111,6 +111,11 @@ The fix is the same release-time discipline: regenerate the shadow gate corpus
 and update `architecture-status.yaml`, `gate/README.md`, enforcer rows, and
 release evidence together.
 
+**rc50 supplement.** The CodeGraph nodegraph supplement kept the canonical
+counts unchanged, but regenerated release evidence from frozen candidate
+commit `b554d744` before publishing the latest release note. This is a
+release-surface refresh, not a new numeric-drift occurrence.
+
 ---
 
 ### F-deleted-module-name-leakage — Deleted-Module-Name Leakage After Refactor

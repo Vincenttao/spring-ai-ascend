@@ -116,7 +116,11 @@ families:
       rc16 P2-1 surfaced lingering drift. First-cut estimates still happen
       without a structured re-baseline ritual; the next missed surface
       will appear in the first authority doc not yet covered by Rules
-      82/91/97/101/G-8.a.
+      82/91/97/101/G-8.a. The rc50 supplemental release kept the canonical
+      counts unchanged, but still regenerated release evidence from frozen
+      candidate commit b554d744 before publishing the latest release note;
+      this records the release-surface refresh without registering a new
+      numeric-drift occurrence.
 
   - id: F-deleted-module-name-leakage
     title: Deleted-Module-Name Leakage After Refactor
