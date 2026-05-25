@@ -38,7 +38,7 @@ affects_artefact:
 
 All findings in the rc48 agentic contract surface architecture review are accepted. The corrective release ships as rc49 and supersedes the rc48 publication note where that note carried pending evidence placeholders, stale SPI counts, and a hook-chain closure claim that was not aligned with the actual Spring AI adapter shell.
 
-The rc49 scope is deliberately limited to the reviewed agentic contract surface. Nodegraph and codegraph remediation remain out of scope for this wave.
+The rc49 corrective scope is the reviewed agentic contract surface. The follow-up rc50 supplement brings the local CodeGraph nodegraph artifact into the same evidence trail without committing the regenerated SQLite database.
 
 ## Finding closure
 

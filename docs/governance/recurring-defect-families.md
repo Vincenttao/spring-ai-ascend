@@ -66,7 +66,7 @@ release note and evidence bundle keep the count at 14.
 | 11 | F-l1-architecture-grounding-gap | L1 Architecture Document Lacks Code-Mapping or SPI Enumeration | 11 (rc40 service architecture tree/SPI appendix drift) | 🟡 monitoring (rc40 resets cool-down; service architecture now separates active SPI interfaces from structural carriers) |
 | 12 | F-bulk-scrub-orphan-syntax | Bulk Regex Scrub Leaves Orphan Punctuation in Code Comments | 4 (rc27, rc28, rc31, rc32) | ⚠️ partial (rc32 register — Rule D-9 bulk-regex scrub recurs every wave; structural fix is AST-aware tooling, deferred) |
 | 13 | F-nonatomic-run-status-write | Non-Atomic Runtime State Write Loses Tenant or Terminal-State Invariants | 5 (rc35-correctness-batch, rc35-second-pass, rc36, rc38, rc39-formal-release-transaction) | 🟡 monitoring (rc39 broadened to tenant-owned runtime state; RunRepository SPI made abstract, save calls source-guarded to create-only sites, TaskStateStore writes made atomic) |
-| 14 | F-project-tool-pin-drift | Project-Local Dev-Tool Pin Drift and Manifest Inconsistency | 1 (rc40-codegraph-mcp-onboarding — preventive registration alongside Rule 125) | ✅ structurally addressed (Rule 125 / E173 gates package.json exact-pin + lockfileVersion>=3 + .mcp.json relative-shim ref before any incident; codegraph-specific today, generalization deferred until a second project-local MCP tool lands) |
+| 14 | F-project-tool-pin-drift | Project-Local Dev-Tool Pin Drift and Manifest Inconsistency | 2 (rc40-codegraph-mcp-onboarding + rc50-nodegraph-evidence) | ✅ structurally addressed (Rule 125 / E173 gates package.json exact-pin + lockfileVersion>=3 + .mcp.json relative-shim ref; rc50 adds local `.codegraph` nodegraph evidence without committing the SQLite database) |
 
 **Cleanup status legend.**
 - ✅ **closed** — no recurrence expected; prevention rule covers all known surfaces; cool-down satisfied.
@@ -611,6 +611,13 @@ rc18 META-lesson (recursive prevention irony) explicitly calls out that
 prevention-time registration beats post-incident registration when the
 pattern is foreseeable.
 
+rc50-nodegraph-evidence extends the family from manifest/install truth to
+the local regenerated nodegraph artifact. `.codegraph/codegraph.db`
+remains git-ignored, but `gate/lib/build_codegraph_nodegraph_evidence.py`
+records its file/node/edge/unresolved-reference counts into release
+evidence so reviewers can see the artifact was included without freezing
+machine-local SQLite state into the repository.
+
 **Surfaces.**
 
 - `tools/codegraph/package.json` — must declare `@colbymchenry/codegraph`
@@ -620,6 +627,10 @@ pattern is foreseeable.
 - `.mcp.json` — `mcpServers.codegraph` args must reference a relative path
   under `tools/codegraph/node_modules/@colbymchenry/codegraph/` so the
   install is cross-platform and PATH-independent.
+- `.codegraph/codegraph.db` — local regenerated nodegraph database; must
+  remain untracked, with release-time shape captured as evidence instead.
+- `gate/lib/build_codegraph_nodegraph_evidence.py` — converts the local DB
+  shape into auditable YAML.
 
 **Prevention.**
 
@@ -634,14 +645,17 @@ pattern is foreseeable.
 every gate parallel/serial pass; any contributor edit that breaks one of
 the three surfaces fails the gate with actionable repair guidance.
 
-**Open residual.** Rule 125 today hardcodes the `@colbymchenry/codegraph`
-package name and the `tools/codegraph/` path. A second project-local MCP
-tool either re-uses the same structural template (a sibling rule with its
-own package name + path pair) or the rule is generalized to walk all
+**Open residual.** Rule 125 remains codegraph-specific for install truth:
+it hardcodes the `@colbymchenry/codegraph` package name and the
+`tools/codegraph/` path. rc50 closes the local-artifact evidence gap by
+adding nodegraph evidence for `.codegraph/codegraph.db` without committing
+the database. A second project-local MCP tool either re-uses the same
+structural template (a sibling rule with its own package name + path pair
+plus local artifact evidence) or the rule is generalized to walk all
 entries of `.mcp.json#mcpServers` and verify a `tools/<name>/` manifest
 exists per entry. Generalization is deferred until a second tool lands;
-the current concrete enforcer matches the single concrete tool the
-platform ships.
+the current concrete enforcer and evidence builder match the single
+concrete tool the platform ships.
 
 ---
 
