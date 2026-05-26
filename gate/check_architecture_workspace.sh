@@ -75,12 +75,12 @@ if [[ $validate_exit -ne 0 ]]; then
   fi
 fi
 
-# Wave 3 will land the fragment idempotency check.
+# W3 fragment idempotency check (architecture/generated/*.dsl byte-identical).
 FRAGMENT_CHECK="$REPO_ROOT/gate/lib/check_workspace_fragment_idempotency.py"
 if [[ -f "$FRAGMENT_CHECK" ]]; then
   note "ARCHITECTURE WORKSPACE: checking architecture/generated/* idempotency..."
   frag_exit=0
-  ( cd "$REPO_ROOT" && python "$FRAGMENT_CHECK" ) || frag_exit=$?
+  ( cd "$REPO_ROOT" && python3 "$FRAGMENT_CHECK" ) || frag_exit=$?
   if [[ $frag_exit -ne 0 ]]; then
     if [[ "$BLOCKING" == "1" ]]; then
       red "ARCHITECTURE WORKSPACE: generated-zone drift (exit $frag_exit)"
@@ -90,6 +90,28 @@ if [[ -f "$FRAGMENT_CHECK" ]]; then
       exit 0
     fi
   fi
+fi
+
+# W4 reverse projection (workspace -> compatibility graph YAML).
+note "ARCHITECTURE WORKSPACE: emitting compatibility graph projection..."
+project_exit=0
+( cd "$REPO_ROOT" && ./mvnw -B -q -f "$TOOL_POM" exec:java \
+    -Dexec.args="project $WORKSPACE docs/governance/architecture-workspace-graph.yaml" ) || project_exit=$?
+if [[ $project_exit -ne 0 ]]; then
+  if [[ "$BLOCKING" == "1" ]]; then
+    red "ARCHITECTURE WORKSPACE: projection emission failed (exit $project_exit)"
+    exit $project_exit
+  else
+    yellow "ARCHITECTURE WORKSPACE (ADVISORY): projection emission failed (exit $project_exit) — would block at Wave 5"
+    exit 0
+  fi
+fi
+
+# W4 informational comparison against legacy graph (does not gate).
+COMPARE_SCRIPT="$REPO_ROOT/gate/lib/compare_workspace_to_legacy_graph.py"
+if [[ -f "$COMPARE_SCRIPT" ]]; then
+  note "ARCHITECTURE WORKSPACE: comparing projection to legacy graph (informational)..."
+  ( cd "$REPO_ROOT" && python3 "$COMPARE_SCRIPT" ) || true
 fi
 
 green "ARCHITECTURE WORKSPACE: PASS (W1 advisory mode; gate flips to blocking at Wave 5)"

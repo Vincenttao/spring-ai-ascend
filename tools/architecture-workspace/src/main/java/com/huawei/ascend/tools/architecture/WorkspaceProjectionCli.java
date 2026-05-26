@@ -15,6 +15,7 @@ import java.util.List;
  *   WorkspaceProjectionCli parse     &lt;workspace.dsl&gt;
  *   WorkspaceProjectionCli validate  &lt;workspace.dsl&gt;
  *   WorkspaceProjectionCli normalize &lt;workspace.dsl&gt; &lt;output.json&gt;
+ *   WorkspaceProjectionCli project   &lt;workspace.dsl&gt; &lt;output.yaml&gt;
  * </pre>
  * <p>
  * Exit codes:
@@ -71,6 +72,13 @@ public final class WorkspaceProjectionCli {
                 }
                 doNormalize(workspace, Path.of(args[2]));
             }
+            case "project" -> {
+                if (args.length != 3) {
+                    System.err.println("project requires <output.yaml>");
+                    System.exit(64);
+                }
+                doProject(workspace, Path.of(args[2]));
+            }
             default -> {
                 System.err.println("unknown command: " + command);
                 usage();
@@ -106,10 +114,17 @@ public final class WorkspaceProjectionCli {
         System.out.println("NORMALIZED JSON written to " + output.toAbsolutePath());
     }
 
+    private static void doProject(Workspace workspace, Path output) throws Exception {
+        doValidate(workspace);
+        new GraphProjectionWriter().write(workspace, output);
+        System.out.println("GRAPH PROJECTION written to " + output.toAbsolutePath());
+    }
+
     private static void usage() {
         System.err.println("Usage:");
         System.err.println("  WorkspaceProjectionCli parse     <workspace.dsl>");
         System.err.println("  WorkspaceProjectionCli validate  <workspace.dsl>");
         System.err.println("  WorkspaceProjectionCli normalize <workspace.dsl> <output.json>");
+        System.err.println("  WorkspaceProjectionCli project   <workspace.dsl> <output.yaml>");
     }
 }
