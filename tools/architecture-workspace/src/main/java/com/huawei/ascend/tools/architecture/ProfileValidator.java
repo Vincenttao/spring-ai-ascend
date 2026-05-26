@@ -16,10 +16,12 @@ import java.util.Set;
  * <p>
  * Authority: ADR-0147; profile YAMLs under {@code architecture/profile/}.
  * <p>
- * Empirical contract (structurizr-dsl 6.2.1, per ADR-0148 empirical-finding-1):
- * {@link Model#getElements()} returns ALL elements INCLUDING CustomElements
- * (CustomElement extends GroupableElement extends Element). Walking
- * {@link Model#getElements()} exactly once reaches every profile-tagged item.
+ * Authority: ADR-0148.
+ * <p>
+ * Empirical contract for structurizr-dsl 6.2.1: {@link Model#getElements()}
+ * returns ALL elements INCLUDING CustomElements (CustomElement extends
+ * GroupableElement extends Element). Walking {@link Model#getElements()}
+ * exactly once reaches every profile-tagged item.
  * Walking BOTH {@link Model#getElements()} AND {@link Model#getCustomElements()}
  * double-counts every CustomElement. The {@link #PROFILE_TAGS},
  * {@link #COMMON_PROPERTIES}, {@link #TAG_SPECIFIC} and {@link #RELATIONSHIP_TYPES}

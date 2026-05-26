@@ -1726,3 +1726,36 @@ families:
       binding at wrapping Run boundary, per ADR-0074 §Consequences).
       Closure also requires re-sweep of every other tenant-scoped row in
       contract-catalog.md to verify field existence.
+
+  - id: F-architecture-authority-fragmentation
+    title: "L1 feature/function-point inventory fragmented across multiple authority surfaces"
+    first_observed_rc: pre-rc55
+    last_observed_rc: rc55
+    occurrences: [pre-rc55, rc55]
+    root_cause: |
+      L1 capability + function-point semantics split across
+      docs/governance/architecture-status.yaml#capabilities, L1 prose
+      (agent-*/ARCHITECTURE.md), the legacy
+      docs/governance/architecture-graph.yaml capability nodes, and
+      L2 docs. AI sessions had to load 5+ files to reason about one
+      feature, and adding a new feature required hand-editing N
+      authority surfaces in lockstep — the recurring "cross-authority
+      parity" sweep family.
+    surfaces:
+      - docs/governance/architecture-status.yaml#capabilities
+      - agent-*/ARCHITECTURE.md
+      - docs/L1/agent-service/*.md
+      - docs/governance/architecture-graph.yaml (capability nodes)
+    prevention_rules:
+      - "Rule G-1.b (Architecture Workspace Truth; amended W5 per ADR-0147)"
+      - "architecture/features/function-points.dsl as the single L1 function-point registry (W2)"
+      - "architecture/features/capabilities.dsl as the single L1 capability registry (W2, mounted from yaml; yaml sunset at W6.c)"
+      - "gate/check_architecture_workspace.sh blocking-mode profile validator + idempotent generated zone (W5+)"
+      - "tools/architecture-workspace/.../fragment/AllFragmentsCli — programmatic mounting of YAML authorities into architecture/generated/ to prevent dual-authoring drift (W3)"
+    cleanup_status: closed
+    open_residual: |
+      W6 sub-waves (a/b/c/d) and W7 retirements are gated by post-W5
+      soak (8.5-week wall-clock). The PREVENTIVE structure is in place;
+      the legacy yaml authority surfaces remain operational during the
+      soak window and lose authority status only when W6.a..W6.d soak
+      clean.

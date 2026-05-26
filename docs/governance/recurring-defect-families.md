@@ -1582,6 +1582,26 @@ G-9 + this document as the structural backstop.
 
 ---
 
+### F-architecture-authority-fragmentation — L1 Feature/Function-Point Inventory Fragmented Across Multiple Authority Surfaces
+
+**Status: closed** (Structurizr workspace authority W5+; W6 sub-wave soak schedule completes ~2026-07-25).
+
+L1 capability + function-point semantics were split across `docs/governance/architecture-status.yaml#capabilities`, L1 prose (`agent-*/ARCHITECTURE.md`), the legacy `docs/governance/architecture-graph.yaml` capability nodes, and L2 docs. AI sessions had to load 5+ files to reason about one feature; adding a new feature required hand-editing N authority surfaces in lockstep — the recurring "cross-authority parity" sweep pattern.
+
+The Structurizr workspace authority migration (ADR-0147 → ADR-0148 → ADR-0149, commits `9611096..1026bbc`) replaces this fragmentation with a single AI-readable registry at `architecture/workspace.dsl` and its closure. Authored capabilities + function points live at `architecture/features/`; module / SPI / enforcer / principle / rule / ADR-graph mirrors are programmatically emitted under `architecture/generated/`. Prevention gates: profile validator (W1+) + byte-identical regeneration (W3+) + blocking-mode workspace gate (W5+).
+
+Prevention rules (current):
+
+- Rule G-1.b (Architecture Workspace Truth; amended W5).
+- `architecture/features/function-points.dsl` as the single L1 function-point registry.
+- `architecture/features/capabilities.dsl` as the single L1 capability registry (YAML sunset at W6.c).
+- `gate/check_architecture_workspace.sh` blocking-mode profile validator + idempotent generated zone.
+- `tools/architecture-workspace/.../fragment/AllFragmentsCli` programmatic mounting.
+
+Open residual: W6.a..W6.d sub-waves + W7 retirements are gated by post-W5 soak (8.5-week wall-clock; complete ~2026-07-25).
+
+---
+
 ## §4 — Cross-references
 
 - Authority: [ADR-0094](../adr/0094-rc17-recurring-defect-family-truth-and-rule-consolidation.yaml) — rc17 recurring-defect-family-truth + rule-consolidation.
