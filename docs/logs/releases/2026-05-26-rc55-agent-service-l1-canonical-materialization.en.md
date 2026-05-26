@@ -31,7 +31,9 @@ exactly. The rc55 wave bumped: adr_count 124→130, graph_nodes
 606→612, graph_edges 1112→1153, recurring_defect_families 20→27.
 
 **Canonical baseline phrasing** (matches the rc54 release-note style for
-Gate Rule 28 grep): 65 §4 constraints · 130 ADRs · 143 active gate rules ·
+Gate Rule 28 grep — rc55 snapshot; audit-2026-05-27 advanced these to
+131 ADRs / 620 nodes / 1172 edges / 33 families):
+65 §4 constraints · 130 ADRs · 143 active gate rules ·
 260 gate self-tests · 43 active engineering rules · 176 enforcer rows ·
 461 Maven XML-counted tests · 612 architecture graph nodes / 1153 edges ·
 27 recurring defect families. **Gate self-tests: 260**.
@@ -156,7 +158,7 @@ MODIFIED (9):
 ## 8. Verification
 
 - All 25 template renders pass byte-identical (Rule G-13 gate).
-- `architecture-graph.yaml` rebuilds deterministically (612 nodes, 1153 edges).
+- `architecture-graph.yaml` rebuilds deterministically (612 nodes, 1153 edges — rc55 snapshot; audit-2026-05-27 advanced to 620 / 1172).
 - `families.yaml` structurally validates (27 entries; schema_version 1).
 - `architecture-status.yaml` baselines match live graph head.
 - All commits pass on Linux/WSL per Rule G-7.

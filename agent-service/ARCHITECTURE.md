@@ -781,7 +781,7 @@ Mode-B (Business-Centric per ADR-0101): `agent-service` deploys on the business 
 
 ### SPI-adjacent structural carriers
 
-These types live near the SPI packages because they are request, response, or decision carriers. They are contract-relevant, but they are not extension interfaces and are not included in the 9-interface count (canonical post-rc43 count of public Java SPI interfaces under `agent-service/src/main/java/.../spi/*.java`; the legacy "7-interface count" phrasing was retired per AUD-2026-05-27 AUD-PARITY-2).
+These types live near the SPI packages because they are request, response, or decision carriers. They are contract-relevant, but they are not extension interfaces and are not included in the 9-interface count (canonical post-rc43 count of public Java SPI interfaces under any `spi/*.java` package within `agent-service/src/main/java/`; the legacy "7-interface count" phrasing was retired per AUD-2026-05-27 AUD-PARITY-2).
 
 | Carrier type | Home | Purpose |
 |---|---|---|
