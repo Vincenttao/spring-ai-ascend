@@ -62,6 +62,21 @@ last_updated: 2026-05-28  # MERGE of PR #93 (agent-service L1 v1.2 — ADR-0155 
 # + contract-catalog update) + Phase D (this baseline lockstep + rc48
 # release note) close the gap by construction. recurring_defect_families
 # 14 → 15; adr_count 104 → 113.
+# 2026-05-29 EngineeringFrame ontology wave (ADR-0157): introduced the SAA EngineeringFrame
+# structural layer (Module -> EngineeringFrame -> FunctionPoint) + anchors/traverses
+# relationships; authored 16 frames across all 7 domain modules; re-tagged agent-service's
+# 6 ADR-0138 Layer features from SAA Feature to SAA EngineeringFrame (feature_corpus 15->9).
+# W0.0 fixed a pre-existing main breakage: RulesFragmentEmitter scanned CLAUDE.md headers
+# (collapsed to a 7-rule kernel after the ADR-0156 shrink) instead of the rule cards, so
+# principles.dsl emitted dangling principle->rule edges and workspace.dsl failed to parse.
+# No new defect FAMILY registered (single observation, below the >=2-occurrence threshold);
+# recurring_defect_families count remains 38. P0-P4 landed across 5 gate-green commits on
+# branch feature/engineering-frame-ontology; P3 migrated Feature->FunctionPoint edges from
+# contains to requires; P4 added the engineering-frames.md dual-track narrative. P5 (pilot),
+# P5 (pilot doc), P6 (frame-integrity rule DESIGN-NOTED) and P7 (cross-cutting design note)
+# landed design-state. Authoring the integrity rule as an active G-22 card + wiring it into the
+# rendered phase-contract table + the advisory->blocking promotion are deferred to a dedicated
+# PR (see plan file).
 families:
   - id: F-numeric-drift
     title: Numeric Drift Across Authority Surfaces
