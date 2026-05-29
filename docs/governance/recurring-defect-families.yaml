@@ -77,6 +77,14 @@ last_updated: 2026-05-28  # MERGE of PR #93 (agent-service L1 v1.2 — ADR-0155 
 # landed design-state. Authoring the integrity rule as an active G-22 card + wiring it into the
 # rendered phase-contract table + the advisory->blocking promotion are deferred to a dedicated
 # PR (see plan file).
+# 2026-05-29 Engine boundary wave (ADR-0158): EnginePort absorbed into agent-bus bus.spi.engine;
+# reference executors relocated agent-service -> agent-execution-engine (the engine is the real
+# instance); DefinitionRef serializable wire reference + design_only Rpc/A2a EnginePort adapters
+# + cross-transport conformance TCK; engine builds standalone (no reverse dependency). Re-evaluated
+# against all 38 families: the only family that fired was F-numeric-drift (architecture_graph
+# baseline 658/1285 -> 659/1286 for the DefinitionRef file node), closed in-lockstep in the same
+# commit. No new defect FAMILY registered (below the >=2-occurrence threshold);
+# recurring_defect_families count remains 38.
 families:
   - id: F-numeric-drift
     title: Numeric Drift Across Authority Surfaces
