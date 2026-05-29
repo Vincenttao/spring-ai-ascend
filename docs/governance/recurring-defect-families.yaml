@@ -85,6 +85,11 @@ last_updated: 2026-05-28  # MERGE of PR #93 (agent-service L1 v1.2 — ADR-0155 
 # baseline 658/1285 -> 659/1286 for the DefinitionRef file node), closed in-lockstep in the same
 # commit. No new defect FAMILY registered (below the >=2-occurrence threshold);
 # recurring_defect_families count remains 38.
+# 2026-05-29 follow-up (gate self-test): fixed a parallel-batch race in
+# test_rule_132_feature_catalog_drift_neg — it mutated a shared working-tree feature README
+# read by a concurrent positive render --check, surfacing a spurious DRIFT on slower CI
+# runners; now mutates an isolated scratch copy. Test-infrastructure fix only; re-evaluated
+# against all families, none newly fired, recurring_defect_families count remains 38.
 families:
   - id: F-numeric-drift
     title: Numeric Drift Across Authority Surfaces
