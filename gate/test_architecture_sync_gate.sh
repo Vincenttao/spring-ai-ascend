@@ -7200,30 +7200,47 @@ test_rule_132_feature_catalog_render_idempotency_pos() {
 
 test_rule_132_feature_catalog_drift_neg() {
   # Rule 132 NEGATIVE case: mutating a rendered feature catalog MUST
-  # cause the canonical gate to fail. This proves the wiring is real
-  # (gate invokes the detector, propagates exit code, fails closed).
-  local target="$PWD/architecture/docs/L1/agent-bus/features/README.md"
-  if [[ ! -f "$target" ]]; then
-    skip "rule_132_feature_catalog_drift_neg" "skip: $target absent — gate cannot fail on a non-existent surface"
+  # cause the detector to fail. This proves the wiring is real
+  # (the detector propagates exit code, fails closed).
+  #
+  # The mutation runs against an ISOLATED scratch copy of the render inputs,
+  # never the real working tree. The self-test orchestrator runs test
+  # functions in parallel batches, and the positive case
+  # (rule_132_feature_catalog_render_idempotency_pos) runs
+  # render_features_catalog.py --check over the SAME working-tree files; an
+  # in-place mutation here would race that concurrent read and surface as a
+  # spurious DRIFT in the positive case (observed deterministically on slower
+  # CI runners). render_features_catalog.py resolves its repo root as
+  # parents[2] of its own path, so copying the script + features.dsl + the
+  # module READMEs into a scratch tree redirects the whole render there.
+  local src="$PWD/architecture/docs/L1/agent-bus/features/README.md"
+  if [[ ! -f "$src" ]]; then
+    skip "rule_132_feature_catalog_drift_neg" "skip: $src absent — gate cannot fail on a non-existent surface"
     return
   fi
-  local backup="$scratch/r132_agent_bus_features_README.md.orig"
-  cp "$target" "$backup"
-  echo "<!-- rule_132_feature_catalog_drift_neg mutation -->" >> "$target"
-  # Run the same detector the canonical gate runs.
+  local sroot="$scratch/r132_neg_repo"
+  rm -rf "$sroot"
+  mkdir -p "$sroot/gate/lib" "$sroot/architecture/features"
+  cp "$PWD/gate/lib/render_features_catalog.py" "$sroot/gate/lib/render_features_catalog.py"
+  cp "$PWD/architecture/features/features.dsl" "$sroot/architecture/features/features.dsl"
+  local _r132_readme
+  while IFS= read -r _r132_readme; do
+    mkdir -p "$sroot/$(dirname "$_r132_readme")"
+    cp "$PWD/$_r132_readme" "$sroot/$_r132_readme"
+  done < <(cd "$PWD" && find architecture/docs/L1 -path '*/features/README.md')
+  # Mutate the isolated copy only — the real working tree is untouched.
+  echo "<!-- rule_132_feature_catalog_drift_neg mutation -->" \
+      >> "$sroot/architecture/docs/L1/agent-bus/features/README.md"
   local check_rc=0
-  if python3 "$PWD/gate/lib/render_features_catalog.py" --check >/dev/null 2>&1; then
+  if python3 "$sroot/gate/lib/render_features_catalog.py" --check >/dev/null 2>&1; then
     check_rc=0
   else
     check_rc=$?
   fi
-  # Restore the original BEFORE asserting so a fixture failure leaves the
-  # working tree clean.
-  cp "$backup" "$target"
   if [[ $check_rc -eq 0 ]]; then
     fail "rule_132_feature_catalog_drift_neg" "Rule 132 regression: render_features_catalog.py --check returned 0 after a deliberate feature-catalog mutation — gate is fail-open for this drift class."
   else
-    ok "rule_132_feature_catalog_drift_neg" "Rule 132 / G-13 sibling: deliberate mutation to architecture/docs/L1/agent-bus/features/README.md triggers feature-catalog drift detection as required (R2 closed)"
+    ok "rule_132_feature_catalog_drift_neg" "Rule 132 / G-13 sibling: deliberate mutation triggers feature-catalog drift detection as required (race-free isolated copy; R2 closed)"
   fi
 }
 
