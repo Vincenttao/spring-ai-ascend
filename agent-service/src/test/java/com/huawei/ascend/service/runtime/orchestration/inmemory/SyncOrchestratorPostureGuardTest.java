@@ -2,10 +2,10 @@ package com.huawei.ascend.service.runtime.orchestration.inmemory;
 
 import com.huawei.ascend.engine.runtime.EngineRegistry;
 import com.huawei.ascend.engine.spi.AgentLoopExecutor;
-import com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition;
+import com.huawei.ascend.bus.spi.engine.ExecutorDefinition;
 import com.huawei.ascend.engine.spi.GraphExecutor;
-import com.huawei.ascend.engine.orchestration.spi.RunContext;
-import com.huawei.ascend.engine.orchestration.spi.SuspendSignal;
+import com.huawei.ascend.bus.spi.engine.RunContext;
+import com.huawei.ascend.bus.spi.engine.SuspendSignal;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

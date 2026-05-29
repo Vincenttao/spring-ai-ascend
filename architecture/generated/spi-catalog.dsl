@@ -19,6 +19,23 @@ genModule_agent_bus -> spi_com_huawei_ascend_bus_spi "module-metadata.yaml#spi_p
         "saa.rel" "declares_spi"
     }
 }
+spi_com_huawei_ascend_bus_spi_engine = element "com.huawei.ascend.bus.spi.engine" "SPI Package" "SPI package mounted from module-metadata.yaml" "SAA SPI" {
+    properties {
+        "saa.id" "SPI-COM_HUAWEI_ASCEND_BUS_SPI_ENGINE"
+        "saa.kind" "spi_package"
+        "saa.level" "L1"
+        "saa.view" "development"
+        "saa.status" "shipped"
+        "saa.owner" "agent-bus"
+        "saa.sourceFile" "agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine"
+    }
+}
+
+genModule_agent_bus -> spi_com_huawei_ascend_bus_spi_engine "module-metadata.yaml#spi_packages" "SAA Relationship" {
+    properties {
+        "saa.rel" "declares_spi"
+    }
+}
 spi_com_huawei_ascend_bus_spi_federation = element "com.huawei.ascend.bus.spi.federation" "SPI Package" "SPI package mounted from module-metadata.yaml" "SAA SPI" {
     properties {
         "saa.id" "SPI-COM_HUAWEI_ASCEND_BUS_SPI_FEDERATION"
@@ -83,23 +100,6 @@ spi_com_huawei_ascend_client_spi = element "com.huawei.ascend.client.spi" "SPI P
 }
 
 genModule_agent_client -> spi_com_huawei_ascend_client_spi "module-metadata.yaml#spi_packages" "SAA Relationship" {
-    properties {
-        "saa.rel" "declares_spi"
-    }
-}
-spi_com_huawei_ascend_engine_orchestration_spi = element "com.huawei.ascend.engine.orchestration.spi" "SPI Package" "SPI package mounted from module-metadata.yaml" "SAA SPI" {
-    properties {
-        "saa.id" "SPI-COM_HUAWEI_ASCEND_ENGINE_ORCHESTRATION_SPI"
-        "saa.kind" "spi_package"
-        "saa.level" "L1"
-        "saa.view" "development"
-        "saa.status" "shipped"
-        "saa.owner" "agent-execution-engine"
-        "saa.sourceFile" "agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi"
-    }
-}
-
-genModule_agent_execution_engine -> spi_com_huawei_ascend_engine_orchestration_spi "module-metadata.yaml#spi_packages" "SAA Relationship" {
     properties {
         "saa.rel" "declares_spi"
     }

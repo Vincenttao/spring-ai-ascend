@@ -1,7 +1,7 @@
 package com.huawei.ascend.service.platform.engine;
 
-import com.huawei.ascend.engine.orchestration.spi.Checkpointer;
-import com.huawei.ascend.engine.orchestration.spi.Orchestrator;
+import com.huawei.ascend.bus.spi.engine.Checkpointer;
+import com.huawei.ascend.bus.spi.engine.Orchestrator;
 import com.huawei.ascend.engine.runtime.EngineRegistry;
 import com.huawei.ascend.service.runtime.capability.Capability;
 import com.huawei.ascend.service.runtime.capability.CapabilityRegistry;

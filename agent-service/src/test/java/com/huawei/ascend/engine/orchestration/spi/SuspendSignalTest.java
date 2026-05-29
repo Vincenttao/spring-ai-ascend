@@ -1,6 +1,6 @@
-package com.huawei.ascend.engine.orchestration.spi;
+package com.huawei.ascend.bus.spi.engine;
 
-import com.huawei.ascend.engine.orchestration.spi.RunMode;
+import com.huawei.ascend.bus.spi.engine.RunMode;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

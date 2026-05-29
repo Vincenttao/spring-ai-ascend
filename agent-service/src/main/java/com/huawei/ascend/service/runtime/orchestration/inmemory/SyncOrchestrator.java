@@ -1,19 +1,21 @@
 package com.huawei.ascend.service.runtime.orchestration.inmemory;
 
 import com.huawei.ascend.engine.runtime.EngineRegistry;
+import com.huawei.ascend.engine.runtime.InProcessEnginePort;
 import com.huawei.ascend.middleware.HookDispatcher;
-import com.huawei.ascend.engine.orchestration.spi.Checkpointer;
+import com.huawei.ascend.bus.spi.engine.Checkpointer;
+import com.huawei.ascend.bus.spi.engine.EnginePort;
 import com.huawei.ascend.engine.spi.EngineMatchingException;
-import com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition;
+import com.huawei.ascend.bus.spi.engine.ExecutorDefinition;
 import com.huawei.ascend.middleware.spi.HookContext;
 import com.huawei.ascend.middleware.spi.HookPoint;
-import com.huawei.ascend.engine.orchestration.spi.Orchestrator;
-import com.huawei.ascend.engine.orchestration.spi.RunContext;
-import com.huawei.ascend.engine.orchestration.spi.SuspendSignal;
+import com.huawei.ascend.bus.spi.engine.Orchestrator;
+import com.huawei.ascend.bus.spi.engine.RunContext;
+import com.huawei.ascend.bus.spi.engine.SuspendSignal;
 import com.huawei.ascend.service.runtime.posture.AppPostureGate;
 import com.huawei.ascend.service.runtime.resilience.spi.SuspendReason;
 import com.huawei.ascend.service.runtime.runs.Run;
-import com.huawei.ascend.engine.orchestration.spi.RunMode;
+import com.huawei.ascend.bus.spi.engine.RunMode;
 import com.huawei.ascend.service.runtime.runs.spi.RunRepository;
 import com.huawei.ascend.service.runtime.runs.RunStateMachine;
 import com.huawei.ascend.service.runtime.runs.RunStatus;
@@ -56,6 +58,7 @@ public final class SyncOrchestrator implements Orchestrator {
     private final RunRepository runs;
     private final Checkpointer checkpointer;
     private final EngineRegistry engineRegistry;
+    private final EnginePort enginePort;
     private final HookDispatcher hookDispatcher;
     private final Duration s2cCallTimeout;
 
@@ -83,6 +86,10 @@ public final class SyncOrchestrator implements Orchestrator {
         this.runs = Objects.requireNonNull(runs);
         this.checkpointer = Objects.requireNonNull(checkpointer);
         this.engineRegistry = Objects.requireNonNull(engineRegistry, "engineRegistry is required");
+        // In-process realization of the EnginePort boundary: when service+engine share a JVM
+        // the engine is driven via a direct call; a networked deployment injects an RPC/A2A
+        // adapter here instead.
+        this.enginePort = new InProcessEnginePort(this.engineRegistry);
         this.hookDispatcher = engineRegistry.hookDispatcher();
         this.s2cCallTimeout = Objects.requireNonNull(s2cCallTimeout, "s2cCallTimeout is required");
         if (s2cCallTimeout.isNegative() || s2cCallTimeout.isZero()) {
@@ -261,8 +268,9 @@ public final class SyncOrchestrator implements Orchestrator {
     private Object dispatch(RunContext ctx, ExecutorDefinition def, Object payload)
             throws SuspendSignal {
         // Rule 43: never pattern-match on ExecutorDefinition subtypes here —
-        // EngineRegistry encapsulates the class-to-engineType mapping.
-        return engineRegistry.resolveByPayload(def).execute(ctx, def, payload);
+        // the EnginePort (in-process: EngineRegistry strict dispatch) encapsulates the
+        // class-to-engineType mapping.
+        return enginePort.execute(ctx, def, payload);
     }
 
     /**

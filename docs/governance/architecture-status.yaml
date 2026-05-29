@@ -121,8 +121,8 @@ capabilities:
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/RunStatus.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/RunStateMachine.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SyncOrchestrator.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SequentialGraphExecutor.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/SequentialGraphExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/IterativeAgentLoopExecutor.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/InMemoryRunRegistry.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/InMemoryCheckpointer.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/posture/AppPostureGate.java
@@ -162,8 +162,8 @@ capabilities:
       section_4_constraints: 65                 # architecture/docs/L0/ARCHITECTURE.md §4 #1..#65 (unchanged at rc22)
       adr_count: 139                            # Fact-Layer W1 +1 (ADR-0154 fact-layer authority) on the L1 Feature Registry W5 baseline of 138.
       maven_tests_green: 463                    # Formula: Surefire/Failsafe XML `tests` attributes after canonical WSL `./mvnw -Pquality verify`; Round-4 Wave Alpha +2 XML-counted tests for FactLayerByteIdentityIT (Rule G-15.c.bytes byte-identity verification moved from bash gate to Maven per 2026-05-28 fourth-correction R3 redesign) on the rc54 baseline of 461.
-      architecture_graph_nodes: 655          # live recount via WSL `python3 gate/build_architecture_graph.py` per Rule G-7: Phase A Wave 5 final state +14 net on the Round-4 Wave Beta baseline of 629 (ADR-0156 + Rules 133-138 / G-16..G-21 + E181-E186 enforcer-row landings = 14 net new graph nodes).
-      architecture_graph_edges: 1272         # live recount via WSL `python3 gate/build_architecture_graph.py` per Rule G-7: Phase A Wave 5 final state +22 net on the Round-4 Wave Beta baseline of 1222 (ADR-0156 extends/relates/supersedes chains + Rules 133-138 enforced_by edges + E181-E186 scope_surfaces wiring → 22 enforcer/decision-graph edges).
+      architecture_graph_nodes: 659          # live recount via WSL `python3 gate/build_architecture_graph.py` per Rule G-7: Phase A Wave 5 final state +14 net on the Round-4 Wave Beta baseline of 629 (ADR-0156 + Rules 133-138 / G-16..G-21 + E181-E186 enforcer-row landings = 14 net new graph nodes); +1 ADR-0158 (DefinitionRef engine-boundary serializable reference carrier).
+      architecture_graph_edges: 1286         # live recount via WSL `python3 gate/build_architecture_graph.py` per Rule G-7: Phase A Wave 5 final state +22 net on the Round-4 Wave Beta baseline of 1222 (ADR-0156 extends/relates/supersedes chains + Rules 133-138 enforced_by edges + E181-E186 scope_surfaces wiring → 22 enforcer/decision-graph edges); +1 ADR-0158 (DefinitionRef engine-boundary carrier containment edge).
       workspace_elements: 608                   # live projection count from docs/governance/architecture-workspace-graph.yaml#node_count; restored after RulesFragmentEmitter switched from scanning CLAUDE.md headers (which had collapsed rules.dsl to 7 nodes and broke workspace parse) to enumerating active rule cards per ADR-0156 cards-as-authority — full 49-rule node set + ADR-0157 brings node_count to 598; then +10 EngineeringFrame elements (ADR-0157 P2a) -> 608. Enforced by gate/lib/check_workspace_baseline_parity.py.
       workspace_relationships: 469              # live projection edge_count from docs/governance/architecture-workspace-graph.yaml#edge_count (projection-edge interpretation); rose with the restored principle->rule operationalised_by edges now that rules.dsl declares the full active-rule node set (RulesFragmentEmitter cards-as-authority). Enforced by gate/lib/check_workspace_baseline_parity.py.
       feature_corpus_size: 9                     # value-thread Features only (W1 seed baseline). The +6 agent-service Layer features were re-tagged to SAA EngineeringFrame per ADR-0157 (structural axis), returning the Feature corpus to 9.
@@ -414,7 +414,7 @@ capabilities:
     l0_decision: architecture/docs/L0/ARCHITECTURE.md
     implementation:
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/Run.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/RunMode.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/RunMode.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/RunStatus.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/spi/RunRepository.java
     tests:
@@ -436,16 +436,16 @@ capabilities:
     shipped: true
     l0_decision: architecture/docs/L0/ARCHITECTURE.md (sec.4 constraint #9)
     implementation:
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/Orchestrator.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/RunContext.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/Orchestrator.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/RunContext.java
       - agent-execution-engine/src/main/java/com/huawei/ascend/engine/spi/GraphExecutor.java
       - agent-execution-engine/src/main/java/com/huawei/ascend/engine/spi/AgentLoopExecutor.java
       - agent-execution-engine/src/main/java/com/huawei/ascend/engine/spi/ExecutorAdapter.java
       - agent-execution-engine/src/main/java/com/huawei/ascend/engine/spi/EngineHookSurface.java
       - agent-execution-engine/src/main/java/com/huawei/ascend/engine/spi/EngineMatchingException.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/ExecutorDefinition.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignal.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/Checkpointer.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/ExecutorDefinition.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/SuspendSignal.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/Checkpointer.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/InMemoryCheckpointer.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignalTest.java
@@ -459,8 +459,8 @@ capabilities:
     l0_decision: architecture/docs/L0/ARCHITECTURE.md (sec.4 constraint #9)
     implementation:
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SyncOrchestrator.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SequentialGraphExecutor.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/SequentialGraphExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/IterativeAgentLoopExecutor.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/InMemoryRunRegistry.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/orchestration/RunStatusTransitionIT.java
@@ -472,8 +472,8 @@ capabilities:
     l0_decision: architecture/docs/L0/ARCHITECTURE.md (sec.4 constraint #9)
     implementation:
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SyncOrchestrator.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SequentialGraphExecutor.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/SequentialGraphExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/IterativeAgentLoopExecutor.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/orchestration/NestedDualModeIT.java
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/orchestration/RunStatusTransitionIT.java
@@ -950,7 +950,7 @@ capabilities:
     shipped: true
     l0_decision: docs/adr/0023-cross-boundary-context-propagation.md
     implementation:
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/RunContext.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/RunContext.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/architecture/TenantPropagationPurityTest.java
     allowed_claim: "Shipped — TenantPropagationPurityTest ArchUnit rule enforces Rule R-C.2.c: no com.huawei.ascend.service.runtime.* main class may import TenantContextHolder. RunContext.tenantId() is the canonical carrier. Test-scope exemption for TenantContextFilterTest."
@@ -980,8 +980,8 @@ capabilities:
     shipped: true
     l0_decision: docs/adr/0025-checkpoint-ownership-boundary.md
     implementation:
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SequentialGraphExecutor.java
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/SequentialGraphExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/IterativeAgentLoopExecutor.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/SyncOrchestrator.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/orchestration/NestedDualModeIT.java
@@ -1116,7 +1116,7 @@ capabilities:
     shipped: true
     l0_decision: docs/adr/0022-payload-codec-spi.md
     implementation:
-      - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutor.java
+      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/exec/IterativeAgentLoopExecutor.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/orchestration/inmemory/IterativeAgentLoopExecutorResumeCursorTest.java
     allowed_claim: "W0: IterativeAgentLoopExecutor throws IllegalStateException (ADR-0022 reference) when non-String payload would be silently corrupted by Object.toString() concat (HD-A.8 fix). String-cursor invariant enforced explicitly."
@@ -1464,7 +1464,7 @@ capabilities:
       - architecture/docs/L0/ARCHITECTURE.md
     implementation:
       - agent-service/src/main/java/com/huawei/ascend/service/platform/tenant/TenantContextFilter.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/RunContext.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/RunContext.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/platform/tenant/TenantContextFilterIT.java
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/architecture/TenantPropagationPurityTest.java
@@ -1489,7 +1489,7 @@ capabilities:
       - docs/adr/0054-long-connection-containment-runtime-handles.md
     implementation:
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/runs/Run.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignal.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/SuspendSignal.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignalTest.java
     allowed_claim: "LogicalCallHandle is the L0 alias for Run+SuspendSignal: Run is the lifecycle identity; SuspendSignal is the one interrupt primitive that releases physical resources without losing the logical call. A LogicalCallHandle is NOT equivalent to a TCP connection, thread, or Netty channel. W0 shipped via Run entity + SuspendSignal."
@@ -1501,7 +1501,7 @@ capabilities:
     l2_documents:
       - docs/adr/0054-long-connection-containment-runtime-handles.md
     implementation:
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignal.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/SuspendSignal.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/engine/orchestration/spi/SuspendSignalTest.java
     allowed_claim: "Named principle: a long wait MUST become a suspended workflow state when useful compute is not happening. W0 implemented via SuspendReason.RateLimited (ADR-0019) and SuspendReason.AwaitTimer. Idle waits must NOT consume scarce physical resources (threads, sockets, connections, event-loop slots). The principle composes with AdmissionDecision.Yielded (ADR-0050)."
@@ -1560,9 +1560,9 @@ capabilities:
       - docs/adr/0061-telemetry-vertical-layer.md
       - architecture/docs/L1/agent-service/ARCHITECTURE.md
     implementation:
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/TraceContext.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/TraceContext.java
       - agent-service/src/main/java/com/huawei/ascend/service/runtime/orchestration/NoopTraceContext.java
-      - agent-execution-engine/src/main/java/com/huawei/ascend/engine/orchestration/spi/RunContext.java
+      - agent-bus/src/main/java/com/huawei/ascend/bus/spi/engine/RunContext.java
     tests:
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/architecture/TelemetryVerticalArchTest.java
       - agent-service/src/test/java/com/huawei/ascend/service/runtime/architecture/RunContextIdentityAccessorsTest.java

@@ -50,7 +50,7 @@ class RunRepositoryAtomicContractTest {
         UUID runId = UUID.randomUUID();
         Run tenantARun = new Run(runId, "tenant-A", "cap",
                 com.huawei.ascend.service.runtime.runs.RunStatus.RUNNING,
-                com.huawei.ascend.engine.orchestration.spi.RunMode.GRAPH,
+                com.huawei.ascend.bus.spi.engine.RunMode.GRAPH,
                 java.time.Instant.now(), java.time.Instant.now(),
                 null, null, null, null, null);
         runs.save(tenantARun);

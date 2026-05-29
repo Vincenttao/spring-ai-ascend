@@ -1,4 +1,4 @@
-package com.huawei.ascend.engine.orchestration.spi;
+package com.huawei.ascend.bus.spi.engine;
 
 import java.util.UUID;
 
@@ -42,7 +42,7 @@ public interface RunContext {
 
     /**
      * Trace correlation carrier. L1.x default implementation is
-     * {@link com.huawei.ascend.service.runtime.orchestration.NoopTraceContext}; W2 wires an
+     * a no-op carrier (provided by the runtime); W2 wires an
      * OTel-backed implementation.
      */
     TraceContext traceContext();

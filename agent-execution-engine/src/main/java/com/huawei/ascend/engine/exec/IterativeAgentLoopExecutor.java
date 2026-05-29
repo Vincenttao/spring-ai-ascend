@@ -1,9 +1,9 @@
-package com.huawei.ascend.service.runtime.orchestration.inmemory;
+package com.huawei.ascend.engine.exec;
 
 import com.huawei.ascend.engine.spi.AgentLoopExecutor;
-import com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition;
-import com.huawei.ascend.engine.orchestration.spi.RunContext;
-import com.huawei.ascend.engine.orchestration.spi.SuspendSignal;
+import com.huawei.ascend.bus.spi.engine.ExecutorDefinition;
+import com.huawei.ascend.bus.spi.engine.RunContext;
+import com.huawei.ascend.bus.spi.engine.SuspendSignal;
 
 import java.nio.charset.StandardCharsets;
 
@@ -20,7 +20,7 @@ public final class IterativeAgentLoopExecutor implements AgentLoopExecutor {
 
     private static final String RESUME_ITER_KEY = "_loop_resume_iter";
     // Accumulated payload at the suspension point — combined with child result on resume.
-    static final String RESUME_STATE_KEY = "_loop_resume_state";
+    public static final String RESUME_STATE_KEY = "_loop_resume_state";
 
     @Override
     public Object execute(RunContext ctx, ExecutorDefinition.AgentLoopDefinition def,

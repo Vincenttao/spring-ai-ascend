@@ -1,6 +1,6 @@
 package com.huawei.ascend.service.runtime.capability;
 
-import com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition;
+import com.huawei.ascend.bus.spi.engine.ExecutorDefinition;
 
 /**
  * A named, runnable unit of work that the run API can dispatch.

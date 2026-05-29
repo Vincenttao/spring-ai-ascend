@@ -1,7 +1,7 @@
 package com.huawei.ascend.service.platform.web.runs;
 
 import com.huawei.ascend.service.runtime.runs.Run;
-import com.huawei.ascend.engine.orchestration.spi.RunMode;
+import com.huawei.ascend.bus.spi.engine.RunMode;
 import com.huawei.ascend.service.runtime.runs.spi.RunRepository;
 import com.huawei.ascend.service.runtime.runs.RunStatus;
 import com.fasterxml.jackson.databind.JsonNode;

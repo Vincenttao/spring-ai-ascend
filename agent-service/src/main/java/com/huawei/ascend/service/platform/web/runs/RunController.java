@@ -4,7 +4,7 @@ import com.huawei.ascend.service.platform.tenant.TenantContext;
 import com.huawei.ascend.service.platform.tenant.TenantContextHolder;
 import com.huawei.ascend.service.platform.web.ErrorEnvelope;
 import com.huawei.ascend.service.runtime.runs.Run;
-import com.huawei.ascend.engine.orchestration.spi.RunMode;
+import com.huawei.ascend.bus.spi.engine.RunMode;
 import com.huawei.ascend.service.runtime.runs.spi.RunRepository;
 import com.huawei.ascend.service.runtime.runs.RunStatus;
 import io.swagger.v3.oas.annotations.media.Content;

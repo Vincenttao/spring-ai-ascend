@@ -1,4 +1,4 @@
-package com.huawei.ascend.engine.orchestration.spi;
+package com.huawei.ascend.bus.spi.engine;
 
 /**
  * Per-Run trace correlation carrier. SPI companion of {@link RunContext} for the
@@ -6,7 +6,7 @@ package com.huawei.ascend.engine.orchestration.spi;
  * Micrometer types, per ARCHITECTURE.md §4 #7.
  *
  * <p>L1.x contract surface: ids are plain Strings (W3C-compatible hex). At L1.x
- * the default implementation is {@link com.huawei.ascend.service.runtime.orchestration.NoopTraceContext},
+ * the default implementation is a no-op carrier (provided by the runtime),
  * which propagates ids without emitting spans. W2 wires an OTel-backed implementation
  * that bridges {@link #newChildSpan(String)} into an OpenTelemetry {@code Tracer}.
  *
@@ -41,8 +41,8 @@ public interface TraceContext {
      * and session_id; its parent_span_id equals this context's span_id; its span_id
      * is freshly generated.
      *
-     * <p>At L1.x the {@link com.huawei.ascend.service.runtime.orchestration.NoopTraceContext}
-     * implementation does not emit a span — it only mints a new id pair. W2 wires
+     * <p>At L1.x the default no-op carrier
+     * does not emit a span — it only mints a new id pair. W2 wires
      * the real OTel {@code Tracer.spanBuilder(...)} path.
      *
      * @param name span name; non-null, non-blank

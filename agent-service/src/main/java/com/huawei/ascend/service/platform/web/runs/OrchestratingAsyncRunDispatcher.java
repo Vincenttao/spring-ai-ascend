@@ -1,7 +1,7 @@
 package com.huawei.ascend.service.platform.web.runs;
 
-import com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition;
-import com.huawei.ascend.engine.orchestration.spi.Orchestrator;
+import com.huawei.ascend.bus.spi.engine.ExecutorDefinition;
+import com.huawei.ascend.bus.spi.engine.Orchestrator;
 import com.huawei.ascend.service.runtime.capability.Capability;
 import com.huawei.ascend.service.runtime.capability.CapabilityRegistry;
 import com.huawei.ascend.service.runtime.runs.Run;

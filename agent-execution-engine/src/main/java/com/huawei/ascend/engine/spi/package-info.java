@@ -9,7 +9,7 @@
  * raised on dispatch mismatch.
  *
  * <p>The payload contract type
- * {@link com.huawei.ascend.engine.orchestration.spi.ExecutorDefinition}
+ * {@link com.huawei.ascend.bus.spi.engine.ExecutorDefinition}
  * lives in the sibling {@code engine.orchestration.spi} package alongside
  * {@code RunContext} / {@code SuspendSignal} (relocated here from the
  * dissolved {@code agent-runtime-core} module / rc13) so the
@@ -19,7 +19,7 @@
  * <p>SPI-pure per CLAUDE.md Rule 32: imports restricted to {@code java.*} +
  * own spi siblings + cross-module SPI surfaces
  * ({@link com.huawei.ascend.middleware.spi.HookPoint} for hook declarations;
- * {@link com.huawei.ascend.engine.orchestration.spi.RunContext} /
+ * {@link com.huawei.ascend.bus.spi.engine.RunContext} /
  * {@code ExecutorDefinition} / {@code SuspendSignal} for adapter signatures).
  * Spring / platform / impl / micrometer imports are forbidden — enforced by
  * {@code SpiPurityGeneralizedArchTest} (E48).
